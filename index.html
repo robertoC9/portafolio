@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Roberto Carbone Ríos</title>
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <!-- CSS externo -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Fondo -->
+  <div class="image-container"></div>
+
+  <!-- Navbar -->
+  <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">R . Carbone</a>
+      <div class="logo-right">
+        <img src="logo.png" alt="Logo" class="logo-img" id="logo">
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <header class="hero">
+    <div class="hero-content text-center text-light">
+      <h1 class="display-3 modern-title">Bienvenido a mi Portafolio</h1>
+      <p class="lead">Innovación y desarrollo web</p>
+    </div>
+  </header>
+
+  <!-- Sobre mí -->
+  <section id="about" class="py-5 text-center">
+    <div class="container">
+      <h2 class="mb-4">Sobre mí</h2>
+      <p>Soy Roberto Carbone Ríos, desarrollador web con experiencia en proyectos digitales frontend y backend.</p>
+      <img src="retrato.jpg" alt="Retrato personal" class="retrato" id="retrato">
+    </div>
+  </section>
+
+  <!-- Proyectos -->
+  <section id="projects" class="py-5">
+    <div class="container">
+      <h2 class="text-center mb-4">Proyectos</h2>
+      <div class="row">
+        <!-- Proyecto 1 -->
+        <div class="col-md-6">
+          <div class="card shadow">
+            <img src="tt.png" class="card-img-top" alt="Dashboard SQL">
+            <div class="card-body">
+              <h5 class="card-title">Dashboard SQL</h5>
+              <p class="card-text">Panel interactivo para métricas municipales.</p>
+              <textarea id="comentario1" class="form-control mb-2" placeholder="Escribe tu comentario..."></textarea>
+              <button class="btn btn-primary" onclick="enviarComentario('comentario1','lista1')">Enviar</button>
+              <ul id="lista1"></ul>
+            </div>
+          </div>
+        </div>
+        <!-- Proyecto 2 -->
+        <div class="col-md-6 mt-4">
+          <div class="card shadow">
+            <img src="th.png" class="card-img-top" alt="Biblioteca digital">
+            <div class="card-body">
+              <h5 class="card-title">Biblioteca Digital</h5>
+              <p class="card-text">Plataforma que conecta comunidades rurales con recursos digitales.</p>
+              <textarea id="comentario2" class="form-control mb-2" placeholder="Escribe tu comentario..."></textarea>
+              <button class="btn btn-primary" onclick="enviarComentario('comentario2','lista2')">Enviar</button>
+              <ul id="lista2"></ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contacto -->
+  <section id="contact" class="py-5 text-center">
+    <div class="container">
+      <h2 class="contact-title mb-4">Contacto</h2>
+      <p>Escríbeme para colaborar en proyectos innovadores.</p>
+      <div class="social-icons">
+        <a href="mailto:robertoangelcarbone@gmail.com"><i class="bi bi-envelope-fill"></i> Correo</a>
+        <a href="https://www.linkedin.com/in/tu_usuario"><i class="bi bi-linkedin"></i> LinkedIn</a>
+        <a href="https://x.com/tu_usuario"><i class="bi bi-twitter-x"></i> X</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer con hora -->
+  <footer>
+    <p>&copy; 2026 | Roberto Carbone Ríos | <span id="hora"></span></p>
+    <div class="social-icons">
+      <a href="mailto:robertoangelcarbone@gmail.com"><i class="bi bi-envelope-fill"></i></a>
+      <a href="https://www.linkedin.com/in/tu_usuario"><i class="bi bi-linkedin"></i></a>
+      <a href="https://x.com/tu_usuario"><i class="bi bi-twitter-x"></i></a>
+    </div>
+  </footer>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Script principal -->
+  <script src="script.js"></script>
+
+  <!-- Script para comentarios y diálogo flotante -->
+  <script>
+    function enviarComentario(idTextarea, idLista) {
+      const comentario = document.getElementById(idTextarea).value;
+      if (!comentario.trim()) {
+        mostrarDialogo("Por favor escribe un comentario ❗");
+        return;
+      }
+
+      fetch("http://localhost:3000/guardar-comentario", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ comentario }) 
+      })
+      .then(res => res.text()) //✅ ahora interpreta texto plano
+      .then(data => {
+        console.log("Respuesta del servidor:", data);
+        document.getElementById(idTextarea).value = ""; // limpia el campo
+        mostrarDialogo("Comentario enviado con éxito ✔️");
+      })
+      .catch(() => {
+        mostrarDialogo("Error al enviar comentario ❌");
+      });
+    }
+
+   function cargarComentarios(idLista) {
+      fetch("http://localhost:3000/comentarios")
+        .then(res => res.json()) // ✅ esta ruta sí devuelve JSON
+        .then(data => {
+          const lista = document.getElementById(idLista);
+          lista.innerHTML = "";
+          data.comentarios.forEach(c => {
+            const li = document.createElement("li");
+            li.textContent = c;
+            lista.appendChild(li);
+          });
+        })
+        .catch(() => {
+          mostrarDialogo("Error al cargar comentarios ❌");
+        });
+    }
+
+    // Diálogo flotante moderno
+    function mostrarDialogo(mensaje) {
+      const dialogo = document.createElement("div");
+      dialogo.className = "dialogo-enviado";
+      dialogo.innerText = mensaje;
+      document.body.appendChild(dialogo);
+      setTimeout(() => dialogo.remove(), 3000);
+    }
+  </script>
+</body>
+</html> 
+
+
+
+
