@@ -1,10 +1,14 @@
 // Importar dependencias
 const express = require("express");
+const cors = require("cors");   // ← IMPORTANTE: aquí cargas cors
 const fs = require("fs");
 const path = require("path");
+
 const app = express();
 
+app.use(cors());                // ← ahora sí puedes usarlo
 app.use(express.json());
+
 
 // Rutas de tu aplicación aquí...
 
