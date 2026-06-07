@@ -1,6 +1,5 @@
 const express = require("express");
 const cors = require("cors");
-const fs = require("fs");
 const path = require("path");
 
 const app = express();
@@ -8,10 +7,10 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Servir archivos estáticos
-app.use(express.static(path.join(__dirname )));
+// Servir archivos estáticos desde la carpeta principal
+app.use(express.static(__dirname));
 
-// Ruta principal opcional
+// Ruta raíz: mostrar tu index.html
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
