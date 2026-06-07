@@ -131,7 +131,7 @@
     }
 
    function cargarComentarios(idLista) {
-      fetch("http://localhost:3000/comentarios")
+      fetch("https://portafolio.onrender.com/comentarios")
         .then(res => res.json()) // ✅ esta ruta sí devuelve JSON
         .then(data => {
           const lista = document.getElementById(idLista);
