@@ -1,16 +1,20 @@
 // Importar dependencias
 const express = require("express");
-const cors = require("cors");
 const fs = require("fs");
 const path = require("path");
-
-// Crear aplicación
 const app = express();
+
+app.use(express.json());
+
+// Rutas de tu aplicación aquí...
+
+// 🔑 Puerto dinámico
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`Servidor corriendo en el puerto ${PORT}`);
 });
+
 
 
 // Activar CORS para permitir peticiones desde tu frontend
