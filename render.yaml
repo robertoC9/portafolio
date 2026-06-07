@@ -1,0 +1,21 @@
+# Exported from Render on 2026-06-07T05:43:16Z
+version: "1"
+projects:
+- name: R. Carbone
+  environments:
+  - name: Production
+    services:
+    - type: web
+      name: portafolio
+      runtime: node
+      repo: https://github.com/robertoC9/portafolio
+      plan: free
+      envVars:
+      - key: port
+        sync: false
+      region: oregon
+      buildCommand: npm install
+      startCommand: node server.js
+      autoDeployTrigger: commit
+      previews:
+        generation: automatic
