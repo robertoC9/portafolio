@@ -1,104 +1,116 @@
 // ===== Hora en el footer =====
 function mostrarHora() {
   const ahora = new Date();
-  const horas = String(ahora.getHours()).padStart(2, '0');
-  const minutos = String(ahora.getMinutes()).padStart(2, '0');
-  const segundos = String(ahora.getSeconds()).padStart(2, '0');
-  const horaElemento = document.getElementById('hora');
+  const horas = String(ahora.getHours()).padStart(2, "0");
+  const minutos = String(ahora.getMinutes()).padStart(2, "0");
+  const segundos = String(ahora.getSeconds()).padStart(2, "0");
+  const horaElemento = document.getElementById("hora");
+
   if (horaElemento) {
     horaElemento.textContent = `${horas}:${minutos}:${segundos}`;
   }
 }
+
 setInterval(mostrarHora, 1000);
 mostrarHora();
 
-// ===== Sombras ondulantes en títulos =====
+// ===== Sombras ondulantes en titulos =====
 function aplicarSombrasOndulantes() {
-  const elementos = document.querySelectorAll('h2');
-  elementos.forEach(el => {
+  const elementos = document.querySelectorAll("h2");
+  elementos.forEach((el) => {
     el.style.animation = "sombrasOndulantes 3s infinite ease-in-out";
   });
 }
+
 aplicarSombrasOndulantes();
 
 // ===== Logo girando hacia la izquierda con rebote =====
 let anguloLogo = 0;
+
 function girarLogo() {
-  anguloLogo -= 0.3; // giro hacia la izquierda
-  const logo = document.getElementById('logo');
+  anguloLogo -= 0.3;
+  const logo = document.getElementById("logo");
+
   if (logo) {
-    logo.style.transform = `rotate(${anguloLogo}deg) scale(${1 + Math.sin(anguloLogo/15)*0.05})`;
+    logo.style.transform = `rotate(${anguloLogo}deg) scale(${1 + Math.sin(anguloLogo / 15) * 0.05})`;
   }
 }
+
 setInterval(girarLogo, 30);
 
-// ===== Retrato con pequeño rebote =====
+// ===== Retrato con pequeno rebote =====
 let anguloRetrato = 0;
+
 function rebotarRetrato() {
   anguloRetrato += 0.2;
-  const retrato = document.getElementById('retrato');
+  const retrato = document.getElementById("retrato");
+
   if (retrato) {
-    retrato.style.transform = `scale(${1 + Math.sin(anguloRetrato/20)*0.05})`;
+    retrato.style.transform = `scale(${1 + Math.sin(anguloRetrato / 20) * 0.05})`;
   }
 }
+
 setInterval(rebotarRetrato, 30);
 
 // ===== Enviar comentario al backend =====
-function enviarComentario(idTextarea, idLista) {
+async function enviarComentario(idTextarea) {
   const comentarioInput = document.getElementById(idTextarea);
+
   if (!comentarioInput) {
-    console.error(`No se encontró el textarea con id='${idTextarea}'`);
+    console.error(`No se encontro el textarea con id='${idTextarea}'`);
     return;
   }
 
   const comentario = comentarioInput.value.trim();
+
   if (!comentario) {
-    mostrarDialogo("⚠️ El comentario está vacío");
+    mostrarDialogo("El comentario esta vacio");
     return;
   }
 
-  fetch("/guardar-comentario", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ comentario })
-  })
-  .then(res => {
-    if (!res.ok) throw new Error("Error en la respuesta del servidor");
-    return res.text();
-  })
-  .then(() => {
+  try {
+    const res = await fetch("/guardar-comentario", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ comentario }),
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Error en la respuesta del servidor");
+    }
+
     comentarioInput.value = "";
-    mostrarDialogo("✅ Comentario enviado con éxito");
-  })
-  .catch(err => {
+    mostrarDialogo("Comentario enviado con exito");
+  } catch (err) {
     console.error("Error en fetch:", err);
-    mostrarDialogo("❌ Error al enviar comentario");
-  });
+    mostrarDialogo("Error al enviar comentario");
+  }
 }
 
 function cargarComentarios(idLista) {
   fetch("/comentarios")
-    .then(res => res.json())
-    .then(data => {
+    .then((res) => res.json())
+    .then((data) => {
       const lista = document.getElementById(idLista);
       if (!lista) return;
+
       lista.innerHTML = "";
-      data.comentarios.forEach(c => {
+      data.comentarios.forEach((comentario) => {
         const li = document.createElement("li");
-        li.textContent = c;
+        li.textContent = comentario;
         lista.appendChild(li);
       });
     })
     .catch(() => {
-      mostrarDialogo("Error al cargar comentarios ❌");
+      mostrarDialogo("Error al cargar comentarios");
     });
 }
 
-// Los comentarios se guardan en comentarios.txt pero no se muestran en la página
-
-// ===== Mostrar diálogo flotante =====
+// ===== Mostrar dialogo flotante =====
 function mostrarDialogo(mensaje) {
   const dialogo = document.createElement("div");
   dialogo.textContent = mensaje;
