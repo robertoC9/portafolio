@@ -50,10 +50,13 @@
         <!-- Proyecto 1 -->
         <div class="col-md-6">
           <div class="card shadow">
-            <img src="tt.png" class="card-img-top" alt="Dashboard SQL">
+            <a href="https://tatto-art.onrender.com" target="_blank" rel="noreferrer">
+              <img src="tattoo1.jpg" class="card-img-top" alt="Tattoo & Art">
+            </a>
             <div class="card-body">
-              <h5 class="card-title">Dashboard SQL</h5>
-              <p class="card-text">Panel interactivo para métricas municipales.</p>
+              <h5 class="card-title">Tattoo & Art</h5>
+              <p class="card-text">Proyecto creativo de tatuajes y diseño artístico.</p>
+              <a href="https://tatto-art.onrender.com" target="_blank" rel="noreferrer" class="btn btn-outline-secondary mb-3">Ver trabajo</a>
               <textarea id="comentario1" class="form-control mb-2" placeholder="Escribe tu comentario..."></textarea>
               <button class="btn btn-primary" onclick="enviarComentario('comentario1','lista1')">Enviar</button>
               <ul id="lista1"></ul>
@@ -63,10 +66,13 @@
         <!-- Proyecto 2 -->
         <div class="col-md-6 mt-4">
           <div class="card shadow">
-            <img src="th.png" class="card-img-top" alt="Biblioteca digital">
+            <a href="https://cmf-gato-enjaulao.onrender.com" target="_blank" rel="noreferrer">
+              <img src="gato-enjaulao.jpg" class="card-img-top" alt="Gato Enjaulao">
+            </a>
             <div class="card-body">
-              <h5 class="card-title">Biblioteca Digital</h5>
-              <p class="card-text">Plataforma que conecta comunidades rurales con recursos digitales.</p>
+              <h5 class="card-title">Gato Enjaulao</h5>
+              <p class="card-text">Proyecto visual inspirado en el arte urbano y los gatos rebeldes.</p>
+              <a href="https://cmf-gato-enjaulao.onrender.com" target="_blank" rel="noreferrer" class="btn btn-outline-secondary mb-3">Ver trabajo</a>
               <textarea id="comentario2" class="form-control mb-2" placeholder="Escribe tu comentario..."></textarea>
               <button class="btn btn-primary" onclick="enviarComentario('comentario2','lista2')">Enviar</button>
               <ul id="lista2"></ul>
@@ -87,6 +93,8 @@
         <a href="https://www.linkedin.com/in/tu_usuario"><i class="bi bi-linkedin"></i> LinkedIn</a>
         <a href="https://x.com/tu_usuario"><i class="bi bi-twitter-x"></i> X</a>
       </div>
+      <p class="mt-4">Revisa la página desplegada en Render:</p>
+      <a class="btn btn-outline-light" href="https://cmf-gato-enjaulao.onrender.com" target="_blank" rel="noreferrer">Ver en Render</a>
     </div>
   </section>
 
@@ -104,59 +112,6 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <!-- Script principal -->
   <script src="script.js"></script>
-
-  <!-- Script para comentarios y diálogo flotante -->
-  <script>
-    function enviarComentario(idTextarea, idLista) {
-      const comentario = document.getElementById(idTextarea).value;
-      if (!comentario.trim()) {
-        mostrarDialogo("Por favor escribe un comentario ❗");
-        return;
-      }
-
-      fetch("http://localhost:3000/guardar-comentario", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ comentario }) 
-      })
-      .then(res => res.text()) //✅ ahora interpreta texto plano
-      .then(data => {
-        console.log("Respuesta del servidor:", data);
-        document.getElementById(idTextarea).value = ""; // limpia el campo
-        mostrarDialogo("Comentario enviado con éxito ✔️");
-      })
-      .catch(() => {
-        mostrarDialogo("Error al enviar comentario ❌");
-      });
-    }
-
-   function cargarComentarios(idLista) {
-      fetch("https://portafolio.onrender.com/comentarios")
-        .then(res => res.json()) // ✅ esta ruta sí devuelve JSON
-        .then(data => {
-          const lista = document.getElementById(idLista);
-          lista.innerHTML = "";
-          data.comentarios.forEach(c => {
-            const li = document.createElement("li");
-            li.textContent = c;
-            lista.appendChild(li);
-          });
-        })
-        .catch(() => {
-          mostrarDialogo("Error al cargar comentarios ❌");
-        });
-    }
-
-    // Diálogo flotante moderno
-    function mostrarDialogo(mensaje) {
-      const dialogo = document.createElement("div");
-      dialogo.className = "dialogo-enviado";
-      dialogo.innerText = mensaje;
-      document.body.appendChild(dialogo);
-      setTimeout(() => dialogo.remove(), 3000);
-    }
-     <script src="script.js"></script>
-  </script>
 </body>
 </html> 
 

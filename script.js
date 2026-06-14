@@ -44,21 +44,20 @@ function rebotarRetrato() {
 setInterval(rebotarRetrato, 30);
 
 // ===== Enviar comentario al backend =====
-function enviarComentario() {
-  const comentarioInput = document.getElementById("comentario");
+function enviarComentario(idTextarea, idLista) {
+  const comentarioInput = document.getElementById(idTextarea);
   if (!comentarioInput) {
-    console.error("No se encontró el input con id='comentario'");
+    console.error(`No se encontró el textarea con id='${idTextarea}'`);
     return;
   }
 
   const comentario = comentarioInput.value.trim();
-
   if (!comentario) {
     mostrarDialogo("⚠️ El comentario está vacío");
     return;
   }
 
-  fetch("http://localhost:3000/guardar-comentario", {
+  fetch("/guardar-comentario", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -69,16 +68,38 @@ function enviarComentario() {
     if (!res.ok) throw new Error("Error en la respuesta del servidor");
     return res.text();
   })
-  .then(data => {
-    console.log("Respuesta del servidor:", data);
+  .then(() => {
     comentarioInput.value = "";
     mostrarDialogo("✅ Comentario enviado con éxito");
+    cargarComentarios(idLista);
   })
   .catch(err => {
     console.error("Error en fetch:", err);
     mostrarDialogo("❌ Error al enviar comentario");
   });
 }
+
+function cargarComentarios(idLista) {
+  fetch("/comentarios")
+    .then(res => res.json())
+    .then(data => {
+      const lista = document.getElementById(idLista);
+      if (!lista) return;
+      lista.innerHTML = "";
+      data.comentarios.forEach(c => {
+        const li = document.createElement("li");
+        li.textContent = c;
+        lista.appendChild(li);
+      });
+    })
+    .catch(() => {
+      mostrarDialogo("Error al cargar comentarios ❌");
+    });
+}
+
+// Cargar comentarios existentes al iniciar
+cargarComentarios('lista1');
+cargarComentarios('lista2');
 
 // ===== Mostrar diálogo flotante =====
 function mostrarDialogo(mensaje) {
@@ -87,7 +108,8 @@ function mostrarDialogo(mensaje) {
   dialogo.style.position = "fixed";
   dialogo.style.bottom = "20px";
   dialogo.style.right = "20px";
-  dialogo.style.background = "yellow";
+  dialogo.style.background = "rgba(255, 204, 0, 0.95)";
+  dialogo.style.color = "#000";
   dialogo.style.padding = "10px 20px";
   dialogo.style.borderRadius = "8px";
   dialogo.style.boxShadow = "0 4px 8px rgba(0,0,0,0.2)";
@@ -96,7 +118,5 @@ function mostrarDialogo(mensaje) {
   dialogo.style.fontWeight = "bold";
   document.body.appendChild(dialogo);
 
-  setTimeout(() => {
-    dialogo.remove();
-  }, 3000);
+  setTimeout(() => dialogo.remove(), 3000);
 }
