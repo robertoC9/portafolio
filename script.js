@@ -71,7 +71,6 @@ function enviarComentario(idTextarea, idLista) {
   .then(() => {
     comentarioInput.value = "";
     mostrarDialogo("✅ Comentario enviado con éxito");
-    cargarComentarios(idLista);
   })
   .catch(err => {
     console.error("Error en fetch:", err);
@@ -97,9 +96,7 @@ function cargarComentarios(idLista) {
     });
 }
 
-// Cargar comentarios existentes al iniciar
-cargarComentarios('lista1');
-cargarComentarios('lista2');
+// Los comentarios se guardan en comentarios.txt pero no se muestran en la página
 
 // ===== Mostrar diálogo flotante =====
 function mostrarDialogo(mensaje) {
