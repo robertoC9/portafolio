@@ -122,6 +122,18 @@ h2 {
   transform: scale(1.05);
 }
 
+/* ===== Imágenes de proyectos (achicar sin deformar) ===== */
+#projects .card-img-top {
+  height: 220px;
+  object-fit: cover;
+}
+
+@media (max-width: 576px) {
+  #projects .card-img-top {
+    height: 180px;
+  }
+}
+
 /* ===== Contacto ===== */
 #contact h2 { font-size: 2.5rem; font-style: italic; }
 .social-icons {
