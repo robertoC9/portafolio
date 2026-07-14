@@ -34,6 +34,16 @@ html, body {
   text-transform: uppercase;
 }
 
+/* ===== Hero subtitle (más destacada) ===== */
+.hero-subtitle {
+  font-weight: 600;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
+  background: rgba(0, 0, 0, 0.18);
+  padding: 8px 14px;
+  border-radius: 10px;
+}
+
+
 /* ===== Navbar ===== */
 .navbar-brand {
   font-weight: bold;
