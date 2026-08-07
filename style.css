@@ -1,23 +1,40 @@
+/* ============================================================
+   HOJA DE ESTILOS DEL PORTAFOLIO DE ROBERTO CARBONE RÍOS
+   ============================================================
+   - Reset general
+   - Fondo fijo
+   - Hero
+   - Navbar
+   - Secciones
+   - Proyectos (estilo neumorfismo)
+   - Contacto
+   - Footer
+   - Diálogo flotante de comentarios
+============================================================ */
+
 /* ===== Reset ===== */
+/* Elimina márgenes y paddings por defecto del navegador */
 html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  overflow-x: hidden;
+  overflow-x: hidden; /* Evita el scroll horizontal */
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 /* ===== Fondo ===== */
+/* Imagen fija de fondo que cubre toda la pantalla y queda detrás del contenido */
 .image-container {
   position: fixed;
   top: 0; left: 0;
   width: 100%; height: 100%;
   background: url("fondo.jpg") no-repeat center center;
   background-size: cover;
-  z-index: -1;
+  z-index: -1; /* Se coloca detrás de todo el contenido */
 }
 
 /* ===== Hero ===== */
+/* Sección de bienvenida que ocupa toda la altura de la pantalla y centra su contenido */
 .hero {
   min-height: 100vh;
   display: flex;
@@ -35,6 +52,7 @@ html, body {
 }
 
 /* ===== Hero subtitle (más destacada) ===== */
+/* Subtítulo con sombra y fondo para mayor legibilidad */
 .hero-subtitle {
   font-weight: 600;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
@@ -43,13 +61,15 @@ html, body {
   border-radius: 10px;
 }
 
-
 /* ===== Navbar ===== */
+/* Marca de la barra de navegación */
 .navbar-brand {
   font-weight: bold;
   color: #9c9163 !important;
 }
+/* Empuja el logo hacia la derecha */
 .logo-right { margin-left: auto; }
+/* Estilo del logo animado */
 .logo-img {
   height: 40px;
   width: auto;
@@ -57,6 +77,7 @@ html, body {
 }
 
 /* ===== Secciones generales ===== */
+/* Todas las secciones comparten fondo semitransparente y texto blanco */
 section {
   background: rgba(0,0,0,0.5);
   padding: 60px 20px;
@@ -65,6 +86,7 @@ section {
 }
 
 /* ===== Sombras negras animadas en todos los h2 ===== */
+/* Títulos con animación de sombras ondulantes */
 h2 {
   font-size: 2rem;
   font-weight: bold;
@@ -72,6 +94,7 @@ h2 {
   animation: sombrasOndulantes 3s infinite ease-in-out;
 }
 
+/* Animación que mueve las sombras alrededor del texto */
 @keyframes sombrasOndulantes {
   0%   { text-shadow: 6px 0px 18px rgba(0,0,0,1), -6px 0px 18px rgba(0,0,0,0.9); }
   25%  { text-shadow: 0px 6px 22px rgba(0,0,0,1), 0px -6px 22px rgba(0,0,0,0.9); }
@@ -82,6 +105,7 @@ h2 {
 
 /* ===== Sobre mí ===== */
 #about h2 { font-size: 2.2rem; }
+/* Retrato circular con borde y sombra */
 .retrato {
   width: 120px;
   border-radius: 50%;
@@ -90,28 +114,54 @@ h2 {
   box-shadow: 0 6px 15px rgba(0,0,0,0.4);
 }
 
-/* ===== Proyectos ===== */
+/* ===== Proyectos (Neumorphism) ===== */
 #projects h2 { font-size: 2.5rem; font-style: italic; }
+/* Tarjetas con efecto neumorfismo (sombras suaves) */
 #projects .card {
-  background-color: #fff;
+  background-color: rgba(227, 232, 238, 0.8);
   color: #333;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
+  border: none;
+  border-radius: 20px;
+  box-shadow:
+    11px 11px 22px rgba(163, 177, 198, 0.6),
+    -11px -11px 22px rgba(255, 255, 255, 0.8);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
+/* Elevación de la tarjeta al pasar el mouse */
 #projects .card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+  box-shadow:
+    9px 9px 18px rgba(163, 177, 198, 0.55),
+    -9px -9px 18px rgba(255, 255, 255, 0.85);
 }
+/* Efecto "presionado" al hacer clic */
+#projects .card:active {
+  transform: translateY(2px) scale(0.99);
+  box-shadow:
+    inset 8px 8px 16px rgba(163, 177, 198, 0.6),
+    inset -8px -8px 16px rgba(255, 255, 255, 0.8);
+}
+/* Recuadro neumórfico para la imagen */
+#projects .card-img-top {
+  border-radius: 14px;
+  margin: 12px 12px 0;
+  width: calc(100% - 24px);
+  box-shadow:
+    6px 6px 12px rgba(163, 177, 198, 0.6),
+    -6px -6px 12px rgba(255, 255, 255, 0.8);
+}
+/* Título de la tarjeta */
 #projects .card-title {
-  font-weight: 500;
+  font-weight: 600;
   font-size: 1rem;
   color: #222;
 }
+/* Texto descriptivo de la tarjeta */
 #projects .card-text {
   font-size: 0.9rem;
   color: #555;
 }
+/* Área de texto (textarea) para comentarios */
 #projects textarea {
   background-color: #3e2723;
   color: #f8f9fa;
@@ -119,7 +169,9 @@ h2 {
   border-radius: 6px;
   padding: 10px;
 }
+/* Texto de marcador de posición del textarea */
 #projects textarea::placeholder { color: #d7ccc8; }
+/* Botones de comentarios */
 #projects button {
   background-color: #e9d791;
   border: none;
@@ -133,11 +185,13 @@ h2 {
 }
 
 /* ===== Imágenes de proyectos (achicar sin deformar) ===== */
+/* Fija la altura de las imágenes y las recorta sin deformarlas */
 #projects .card-img-top {
   height: 220px;
   object-fit: cover;
 }
 
+/* En pantallas pequeñas, reduce la altura de las imágenes */
 @media (max-width: 576px) {
   #projects .card-img-top {
     height: 180px;
@@ -149,6 +203,7 @@ h2 {
 .social-icons {
   margin-top: 20px;
 }
+/* Enlaces de redes sociales */
 .social-icons a {
   display: inline-block;
   margin: 0 15px;
@@ -157,12 +212,14 @@ h2 {
   text-decoration: none;
   transition: color 0.3s, transform 0.3s;
 }
+/* Cambio de color y tamaño al pasar el mouse */
 .social-icons a:hover {
   color: #ffcc00;
   transform: scale(1.2);
 }
 
 /* ===== Footer ===== */
+/* Pie de página con fondo degradado oscuro y estilo Impact */
 footer {
   background: linear-gradient(135deg, #000000, #1a1a1a);
   color: #d3d3d3;
@@ -176,18 +233,21 @@ footer p {
   font-size: 1.2rem;
   color: #9c9163;
 }
+/* Iconos de redes sociales del footer */
 footer .social-icons a {
   color: #524935;
   margin: 0 10px;
   font-size: 1.5rem;
   transition: transform 0.3s, color 0.3s;
 }
+/* Efecto al pasar el mouse sobre los iconos del footer */
 footer .social-icons a:hover {
   color: #857a4f;
   transform: scale(1.2) rotate(-5deg);
 }
 
 /* ===== Diálogo flotante de comentarios ===== */
+/* Aviso flotante que aparece al enviar/cargar comentarios */
 .dialogo-enviado {
   position: fixed;
   bottom: 30px;
@@ -203,6 +263,7 @@ footer .social-icons a:hover {
   z-index: 9999;
 }
 
+/* Animación de entrada y salida del diálogo flotante */
 @keyframes fadeInOut {
   0% { opacity: 0; transform: translateY(20px); }
   10% { opacity: 1; transform: translateY(0); }

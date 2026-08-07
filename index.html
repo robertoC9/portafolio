@@ -1,31 +1,43 @@
 <!DOCTYPE html>
+<!-- ============================================================
+     PORTAFOLIO DE ROBERTO CARBONE RÍOS
+     ============================================================
+     Página principal (single page) del portafolio personal.
+     Incluye: Navbar, Hero, Sobre mí, Proyectos, Contacto y Footer.
+     Estilos: Bootstrap 5.3 + style.css
+     Interactividad: script.js
+============================================================ -->
 <html lang="es">
 <head>
+  <!-- Metadatos básicos de la página -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Roberto Carbone Ríos</title>
-  <!-- Bootstrap CSS -->
+
+  <!-- Bootstrap CSS (framework de estilos) -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Bootstrap Icons -->
+  <!-- Bootstrap Icons (iconos: correo, linkedin, X, etc.) -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-  <!-- CSS externo -->
+  <!-- CSS externo propio del portafolio -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <!-- Fondo -->
+  <!-- Fondo de imagen fijo que cubre toda la página -->
   <div class="image-container"></div>
 
-  <!-- Navbar -->
+  <!-- ===== Barra de navegación (Navbar) ===== -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
     <div class="container-fluid">
-      <a class="navbar-brand" href="#">R . Carbone</a>
+      <!-- Marca / nombre que aparece a la izquierda -->
+      <a class="navbar-brand" href="#">A . Carbone</a>
+      <!-- Logo animado que se muestra a la derecha (id="logo" usado por script.js) -->
       <div class="logo-right">
         <img src="logo.png" alt="Logo" class="logo-img" id="logo">
       </div>
     </div>
   </nav>
 
-  <!-- Hero -->
+  <!-- ===== Hero (sección de bienvenida) ===== -->
   <header class="hero">
     <div class="hero-content text-center text-light">
       <h1 class="display-3 modern-title">Bienvenido a mi Portafolio</h1>
@@ -33,23 +45,25 @@
     </div>
   </header>
 
-  <!-- Sobre mí -->
+  <!-- ===== Sobre mí ===== -->
   <section id="about" class="py-5 text-center">
     <div class="container">
       <h2 class="mb-4">Sobre mí</h2>
-      <p>Soy Roberto Carbone Ríos, desarrollador web con experiencia en proyectos digitales frontend y backend.</p>
+      <p>Soy Roberto Angel Carbone , desarrollador web con experiencia en proyectos digitales frontend y backend.</p>
+      <!-- Retrato personal con animación de rebote (id="retrato" usado por script.js) -->
       <img src="retrato.jpg" alt="Retrato personal" class="retrato" id="retrato">
     </div>
   </section>
 
-  <!-- Proyectos -->
+  <!-- ===== Proyectos ===== -->
   <section id="projects" class="py-5">
     <div class="container">
       <h2 class="text-center mb-4">Proyectos</h2>
       <div class="row">
-        <!-- Proyecto 1 -->
+        <!-- Proyecto 1: Tattoo & Art -->
         <div class="col-md-6">
           <div class="card shadow">
+            <!-- La imagen es un enlace al sitio del proyecto -->
             <a href="https://tatto-art.onrender.com" target="_blank" rel="noreferrer">
               <img src="tattoo1.jpg" class="card-img-top" alt="Tattoo & Art">
             </a>
@@ -57,13 +71,11 @@
               <h5 class="card-title">Tattoo & Art</h5>
               <p class="card-text">Proyecto creativo de tatuajes y diseño artístico.</p>
               <a href="https://tatto-art.onrender.com" target="_blank" rel="noreferrer" class="btn btn-outline-secondary mb-3">Ver trabajo</a>
-              <textarea id="comentario1" class="form-control mb-2" placeholder="Escribe tu comentario..."></textarea>
-              <button class="btn btn-primary" onclick="enviarComentario('comentario1','lista1')">Enviar</button>
-              <ul id="lista1"></ul>
             </div>
           </div>
         </div>
-        <!-- Proyecto 2 -->
+
+        <!-- Proyecto 2: Gato Enjaulao -->
         <div class="col-md-6 mt-4">
           <div class="card shadow">
             <a href="https://cmf-gato-enjaulao.onrender.com" target="_blank" rel="noreferrer">
@@ -73,27 +85,34 @@
               <h5 class="card-title">Gato Enjaulao</h5>
               <p class="card-text">Proyecto visual inspirado en el arte urbano y los gatos rebeldes.</p>
               <a href="https://cmf-gato-enjaulao.onrender.com" target="_blank" rel="noreferrer" class="btn btn-outline-secondary mb-3">Ver trabajo</a>
-              <textarea id="comentario2" class="form-control mb-2" placeholder="Escribe tu comentario..."></textarea>
-              <button class="btn btn-primary" onclick="enviarComentario('comentario2','lista2')">Enviar</button>
-              <ul id="lista2"></ul>
             </div>
           </div>
         </div>
-        <!-- Proyecto 3 -->
-        <div class="row mt-4">
-          <div class="col-md-6 mx-auto">
-            <div class="card shadow">
-              <a href="https://publicidad-aqua-sun-1.onrender.com" target="_blank" rel="noreferrer">
-                <img src="publicidad.jpg" class="card-img-top" alt="Publicidad">
-              </a>
-              <div class="card-body">
-                <h5 class="card-title">Publicidad</h5>
-                <p class="card-text">Proyecto de página publicitaria profesional.</p>
-                <a href="https://publicidad-aqua-sun-1.onrender.com" target="_blank" rel="noreferrer" class="btn btn-outline-secondary mb-3">Ver trabajo</a>
-                <textarea id="comentario3" class="form-control mb-2" placeholder="Escribe tu comentario..."></textarea>
-                <button class="btn btn-primary" onclick="enviarComentario('comentario3','lista3')">Enviar</button>
-                <ul id="lista3"></ul>
-              </div>
+
+        <!-- Proyecto 3: Publicidad -->
+        <div class="col-md-6 mt-4">
+          <div class="card shadow">
+            <a href="https://publicidad-aqua-sun-1.onrender.com" target="_blank" rel="noreferrer">
+              <img src="publicidad.jpg" class="card-img-top" alt="Publicidad">
+            </a>
+            <div class="card-body">
+              <h5 class="card-title">Publicidad</h5>
+              <p class="card-text">Proyecto de página publicitaria profesional.</p>
+              <a href="https://publicidad-aqua-sun-1.onrender.com" target="_blank" rel="noreferrer" class="btn btn-outline-secondary mb-3">Ver trabajo</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Proyecto 4: Blog -->
+        <div class="col-md-6 mt-4">
+          <div class="card shadow">
+            <a href="https://debbieblog.netlify.app/" target="_blank" rel="noreferrer">
+              <img src="blog.png" class="card-img-top" alt="Blog">
+            </a>
+            <div class="card-body">
+              <h5 class="card-title">Blog</h5>
+              <p class="card-text">Blog personal con publicaciones y contenido propio.</p>
+              <a href="https://debbieblog.netlify.app/" target="_blank" rel="noreferrer" class="btn btn-outline-secondary mb-3">Ver trabajo</a>
             </div>
           </div>
         </div>
@@ -101,22 +120,28 @@
     </div>
   </section>
 
-  <!-- Contacto -->
+<!-- ===== Contacto ===== -->
   <section id="contact" class="py-5 text-center">
     <div class="container">
       <h2 class="contact-title mb-4">Contacto</h2>
       <p>Escríbeme para colaborar en proyectos innovadores.</p>
+      <!-- Enlaces de contacto: correo, LinkedIn y X -->
       <div class="social-icons">
+        <!-- Enlace de correo electrónico -->
         <a href="mailto:robertoangelcarbone@gmail.com"><i class="bi bi-envelope-fill"></i> Correo</a>
+        <!-- Enlace a LinkedIn -->
         <a href="https://www.https://www.linkedin.com/in/roberto-angel" target="_blank" rel="noreferrer"><i class="bi bi-linkedin"></i> Roberto Carbone</a>
+        <!-- Enlace a X (Twitter) -->
         <a href="https://x.com/RobertoACarbone" target="_blank" rel="noreferrer"><i class="bi bi-twitter-x"></i> X</a>
       </div>
     </div>
   </section>
 
-  <!-- Footer con hora -->
+  <!-- ===== Footer (pie de página) con hora en vivo ===== -->
   <footer>
+    <!-- El <span id="hora"> se rellena con la hora actual mediante script.js -->
     <p>&copy; 2026 | Roberto Carbone Ríos | <span id="hora"></span></p>
+    <!-- Iconos de redes sociales en el pie de página -->
     <div class="social-icons">
       <a href="mailto:robertoangelcarbone@gmail.com" aria-label="Correo"><i class="bi bi-envelope-fill"></i></a>
       <a href="https://www.linkedin.com/search/results/people/?keywords=Roberto%20Carbone" target="_blank" rel="noreferrer" aria-label="LinkedIn Roberto Carbone"><i class="bi bi-linkedin"></i></a>
@@ -124,9 +149,9 @@
     </div>
   </footer>
 
-  <!-- Bootstrap JS -->
+  <!-- Bootstrap JS (componentes interactivos del framework) -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-  <!-- Script principal -->
+  <!-- Script principal del portafolio (reloj, animaciones, comentarios) -->
   <script src="script.js"></script>
 </body>
 </html>
