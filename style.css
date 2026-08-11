@@ -161,6 +161,24 @@ h2 {
   font-size: 0.9rem;
   color: #555;
 }
+/* Contenedor de botones de acción de cada proyecto */
+.project-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}
+.project-actions .btn {
+  margin-bottom: 0;
+}
+.project-actions .btn-outline-dark {
+  color: #111;
+  border-color: #111;
+}
+.project-actions .btn-outline-dark:hover {
+  background-color: #111;
+  color: #fff;
+}
 /* Área de texto (textarea) para comentarios */
 #projects textarea {
   background-color: #3e2723;
