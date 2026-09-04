@@ -43,6 +43,23 @@ function aplicarSombrasOndulantes() {
 // Se ejecuta al cargar la página
 aplicarSombrasOndulantes();
 
+// ===== Tarjetas de certificaciones expandibles =====
+// Las tarjetas comienzan compactas y muestran la imagen completa al pulsarlas.
+document.querySelectorAll(".certificate-card").forEach((tarjeta) => {
+  const alternarCertificado = () => {
+    const estaExpandida = tarjeta.classList.toggle("is-expanded");
+    tarjeta.setAttribute("aria-expanded", String(estaExpandida));
+  };
+
+  tarjeta.addEventListener("click", alternarCertificado);
+  tarjeta.addEventListener("keydown", (evento) => {
+    if (evento.key === "Enter" || evento.key === " ") {
+      evento.preventDefault();
+      alternarCertificado();
+    }
+  });
+});
+
 // ===== Logo girando hacia la izquierda con rebote =====
 let anguloLogo = 0; // Ángulo actual de rotación del logo
 

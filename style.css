@@ -222,6 +222,73 @@ h2 {
   }
 }
 
+/* ===== Certificaciones ===== */
+#certifications h2 { font-size: 2.5rem; font-style: italic; }
+.certifications-intro {
+  color: rgba(255, 255, 255, 0.85);
+}
+#certifications .card {
+  background-color: rgba(227, 232, 238, 0.8);
+  color: #333;
+  border: none;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow:
+    11px 11px 22px rgba(163, 177, 198, 0.6),
+    -11px -11px 22px rgba(255, 255, 255, 0.8);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+}
+#certifications .card:hover {
+  transform: translateY(-5px);
+  box-shadow:
+    9px 9px 18px rgba(163, 177, 198, 0.55),
+    -9px -9px 18px rgba(255, 255, 255, 0.85);
+}
+.certificate-preview {
+  position: relative;
+  display: block;
+  height: 145px;
+  margin: 12px 12px 0;
+  overflow: hidden;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow:
+    6px 6px 12px rgba(163, 177, 198, 0.6),
+    -6px -6px 12px rgba(255, 255, 255, 0.8);
+  transition: height 0.35s ease;
+}
+#certifications .certificate-card.is-expanded .certificate-preview {
+  height: 260px;
+}
+#certifications .certificate-card:focus-visible {
+  outline: 3px solid #9c9163;
+  outline-offset: 4px;
+}
+.certificate-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+#certifications .card-title {
+  font-weight: 600;
+  color: #222;
+}
+#certifications .card-text {
+  font-size: 0.9rem;
+  color: #555;
+}
+
+@media (max-width: 576px) {
+  .certificate-preview {
+    height: 120px;
+  }
+  #certifications .certificate-card.is-expanded .certificate-preview {
+    height: 210px;
+  }
+}
+
 /* ===== Contacto ===== */
 #contact h2 { font-size: 2.5rem; font-style: italic; }
 .social-icons {
