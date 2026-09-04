@@ -1,30 +1,18 @@
 /* ============================================================
    HOJA DE ESTILOS DEL PORTAFOLIO DE ROBERTO CARBONE RÍOS
-   ============================================================
-   - Reset general
-   - Fondo fijo
-   - Hero
-   - Navbar
-   - Secciones
-   - Proyectos (estilo neumorfismo)
-   - Contacto
-   - Footer
-   - Diálogo flotante de comentarios
-============================================================ */
+   ============================================================ */
 
 /* ===== Reset ===== */
-/* Elimina márgenes y paddings por defecto del navegador */
 html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  overflow-x: hidden; /* Evita el scroll horizontal */
+  overflow-x: hidden;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   position: relative;
 }
 
 /* ===== Fondo ===== */
-/* Imagen fija de fondo que cubre toda la pantalla y queda detrás del contenido */
 .image-container {
   position: fixed;
   inset: 0;
@@ -33,14 +21,12 @@ html, body {
   background: url("fondo.jpg") center center / cover no-repeat;
   z-index: 0;
 }
-
 body > *:not(.image-container) {
   position: relative;
   z-index: 1;
 }
 
 /* ===== Hero ===== */
-/* Sección de bienvenida que ocupa toda la altura de la pantalla y centra su contenido */
 .hero {
   min-height: 100vh;
   display: flex;
@@ -56,9 +42,6 @@ body > *:not(.image-container) {
   letter-spacing: 2px;
   text-transform: uppercase;
 }
-
-/* ===== Hero subtitle (más destacada) ===== */
-/* Subtítulo con sombra y fondo para mayor legibilidad */
 .hero-subtitle {
   font-weight: 600;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
@@ -68,22 +51,18 @@ body > *:not(.image-container) {
 }
 
 /* ===== Navbar ===== */
-/* Marca de la barra de navegación */
 .navbar-brand {
   font-weight: bold;
   color: #9c9163 !important;
 }
-/* Empuja el logo hacia la derecha */
 .logo-right { margin-left: auto; }
-/* Estilo del logo animado */
 .logo-img {
   height: 40px;
   width: auto;
   border-radius: 6px;
 }
 
-/* ===== Secciones generales ===== */
-/* Todas las secciones comparten fondo semitransparente y texto blanco */
+/* ===== Secciones ===== */
 section {
   background: rgba(0,0,0,0.5);
   padding: 60px 20px;
@@ -91,16 +70,13 @@ section {
   color: #fff;
 }
 
-/* ===== Sombras negras animadas en todos los h2 ===== */
-/* Títulos con animación de sombras ondulantes */
+/* ===== Sombras animadas en h2 ===== */
 h2 {
   font-size: 2rem;
   font-weight: bold;
   color: #9c9163;
   animation: sombrasOndulantes 3s infinite ease-in-out;
 }
-
-/* Animación que mueve las sombras alrededor del texto */
 @keyframes sombrasOndulantes {
   0%   { text-shadow: 6px 0px 18px rgba(0,0,0,1), -6px 0px 18px rgba(0,0,0,0.9); }
   25%  { text-shadow: 0px 6px 22px rgba(0,0,0,1), 0px -6px 22px rgba(0,0,0,0.9); }
@@ -111,7 +87,6 @@ h2 {
 
 /* ===== Sobre mí ===== */
 #about h2 { font-size: 2.2rem; }
-/* Retrato circular con borde y sombra */
 .retrato {
   width: 120px;
   border-radius: 50%;
@@ -120,131 +95,81 @@ h2 {
   box-shadow: 0 6px 15px rgba(0,0,0,0.4);
 }
 
-/* ===== Proyectos (Neumorphism) ===== */
+/* ===== Proyectos (oscuro transparente) ===== */
 #projects h2 { font-size: 2.5rem; font-style: italic; }
-/* Tarjetas con efecto neumorfismo (sombras suaves) */
 #projects .card {
-  background-color: rgba(227, 232, 238, 0.8);
-  color: #333;
-  border: none;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
   border-radius: 20px;
-  box-shadow:
-    11px 11px 22px rgba(163, 177, 198, 0.6),
-    -11px -11px 22px rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-/* Elevación de la tarjeta al pasar el mouse */
 #projects .card:hover {
   transform: translateY(-5px);
-  box-shadow:
-    9px 9px 18px rgba(163, 177, 198, 0.55),
-    -9px -9px 18px rgba(255, 255, 255, 0.85);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.6);
 }
-/* Efecto "presionado" al hacer clic */
-#projects .card:active {
-  transform: translateY(2px) scale(0.99);
-  box-shadow:
-    inset 8px 8px 16px rgba(163, 177, 198, 0.6),
-    inset -8px -8px 16px rgba(255, 255, 255, 0.8);
-}
-/* Recuadro neumórfico para la imagen */
-#projects .card-img-top {
-  border-radius: 14px;
-  margin: 12px 12px 0;
-  width: calc(100% - 24px);
-  box-shadow:
-    6px 6px 12px rgba(163, 177, 198, 0.6),
-    -6px -6px 12px rgba(255, 255, 255, 0.8);
-}
-/* Título de la tarjeta */
-#projects .card-title {
-  font-weight: 600;
-  font-size: 1rem;
-  color: #222;
-}
-/* Texto descriptivo de la tarjeta */
+#projects .card-title,
 #projects .card-text {
-  font-size: 0.9rem;
-  color: #555;
-}
-/* Contenedor de botones de acción de cada proyecto */
-.project-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  margin-top: 0.75rem;
-}
-.project-actions .btn {
-  margin-bottom: 0;
-}
-.project-actions .btn-outline-dark {
-  color: #111;
-  border-color: #111;
-}
-.project-actions .btn-outline-dark:hover {
-  background-color: #111;
   color: #fff;
 }
-/* Área de texto (textarea) para comentarios */
+.project-actions .btn-outline-dark {
+  color: #fff;
+  border-color: #fff;
+}
+.project-actions .btn-outline-dark:hover {
+  background-color: #fff;
+  color: #000;
+}
 #projects textarea {
-  background-color: #3e2723;
-  color: #f8f9fa;
-  border: 1px solid #5d4037;
+  background-color: rgba(255,255,255,0.1);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.3);
   border-radius: 6px;
   padding: 10px;
 }
-/* Texto de marcador de posición del textarea */
-#projects textarea::placeholder { color: #d7ccc8; }
-/* Botones de comentarios */
+#projects textarea::placeholder { color: #ccc; }
 #projects button {
-  background-color: #e9d791;
+  background-color: #9c9163;
   border: none;
-  color: #000;
+  color: #fff;
   font-weight: bold;
   transition: background-color 0.3s, transform 0.3s;
 }
 #projects button:hover {
-  background-color: #ebd09b;
+  background-color: #857a4f;
   transform: scale(1.05);
 }
-
-/* ===== Imágenes de proyectos (achicar sin deformar) ===== */
-/* Fija la altura de las imágenes y las recorta sin deformarlas */
 #projects .card-img-top {
   height: 220px;
   object-fit: cover;
+  border-radius: 14px;
+  margin: 12px 12px 0;
 }
 
-/* En pantallas pequeñas, reduce la altura de las imágenes */
-@media (max-width: 576px) {
-  #projects .card-img-top {
-    height: 180px;
-  }
-}
-
-/* ===== Certificaciones ===== */
+/* ===== Certificaciones (oscuro transparente) ===== */
 #certifications h2 { font-size: 2.5rem; font-style: italic; }
 .certifications-intro {
   color: rgba(255, 255, 255, 0.85);
 }
 #certifications .card {
-  background-color: rgba(227, 232, 238, 0.8);
-  color: #333;
-  border: none;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
   border-radius: 20px;
-  overflow: hidden;
-  box-shadow:
-    11px 11px 22px rgba(163, 177, 198, 0.6),
-    -11px -11px 22px rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   cursor: pointer;
 }
 #certifications .card:hover {
   transform: translateY(-5px);
-  box-shadow:
-    9px 9px 18px rgba(163, 177, 198, 0.55),
-    -9px -9px 18px rgba(255, 255, 255, 0.85);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.6);
 }
+#certifications .card-title,
+#certifications .card-text {
+  color: #fff;
+}
+/* Vista previa compacta: solo un adelanto del certificado */
 .certificate-preview {
   position: relative;
   display: block;
@@ -252,18 +177,8 @@ h2 {
   margin: 12px 12px 0;
   overflow: hidden;
   border-radius: 14px;
-  background: #fff;
-  box-shadow:
-    6px 6px 12px rgba(163, 177, 198, 0.6),
-    -6px -6px 12px rgba(255, 255, 255, 0.8);
+  background: rgba(255,255,255,0.1);
   transition: height 0.35s ease;
-}
-#certifications .certificate-card.is-expanded .certificate-preview {
-  height: 260px;
-}
-#certifications .certificate-card:focus-visible {
-  outline: 3px solid #9c9163;
-  outline-offset: 4px;
 }
 .certificate-image {
   display: block;
@@ -271,21 +186,50 @@ h2 {
   height: 100%;
   object-fit: contain;
 }
-#certifications .card-title {
-  font-weight: 600;
-  color: #222;
-}
-#certifications .card-text {
-  font-size: 0.9rem;
-  color: #555;
-}
 
+/* ===== Certificaciones: tarjeta ampliada al hacer clic ===== */
+/* La columna pasa a ocupar la fila completa para que el certificado se lea */
+#certifications .certificate-col.is-expanded {
+  flex: 0 0 100%;
+  max-width: 100%;
+}
+/* La vista previa adopta la proporción real del certificado (1620x1013),
+   así se ve la página entera sin recortes ni deformación */
+#certifications .certificate-card.is-expanded .certificate-preview {
+  height: auto;
+  aspect-ratio: 1620 / 1013;
+  margin: 16px 16px 0;
+  background: #fff;
+}
+/* La tarjeta abierta no se levanta con el hover para no "saltar" al leerla */
+#certifications .certificate-card.is-expanded,
+#certifications .certificate-card.is-expanded:hover {
+  transform: none;
+  box-shadow: 0 10px 28px rgba(0,0,0,0.7);
+  border-color: rgba(156,145,99,0.7);
+}
+/* Contorno visible al navegar con teclado */
+#certifications .certificate-card:focus-visible {
+  outline: 3px solid #9c9163;
+  outline-offset: 4px;
+}
+/* Aviso de interacción bajo el texto de cada tarjeta */
+.certificate-hint {
+  display: block;
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.6);
+}
+/* En pantallas pequeñas la vista previa compacta es un poco más baja */
 @media (max-width: 576px) {
   .certificate-preview {
     height: 120px;
   }
-  #certifications .certificate-card.is-expanded .certificate-preview {
-    height: 210px;
+}
+/* Respeta la preferencia del sistema de reducir animaciones */
+@media (prefers-reduced-motion: reduce) {
+  .certificate-preview {
+    transition: none;
   }
 }
 
@@ -294,7 +238,6 @@ h2 {
 .social-icons {
   margin-top: 20px;
 }
-/* Enlaces de redes sociales */
 .social-icons a {
   display: inline-block;
   margin: 0 15px;
@@ -303,14 +246,12 @@ h2 {
   text-decoration: none;
   transition: color 0.3s, transform 0.3s;
 }
-/* Cambio de color y tamaño al pasar el mouse */
 .social-icons a:hover {
   color: #ffcc00;
   transform: scale(1.2);
 }
 
 /* ===== Footer ===== */
-/* Pie de página con fondo degradado oscuro y estilo Impact */
 footer {
   background: linear-gradient(135deg, #000000, #1a1a1a);
   color: #d3d3d3;
@@ -324,28 +265,24 @@ footer p {
   font-size: 1.2rem;
   color: #9c9163;
 }
-/* Iconos de redes sociales del footer */
 footer .social-icons a {
   color: #524935;
   margin: 0 10px;
   font-size: 1.5rem;
   transition: transform 0.3s, color 0.3s;
 }
-/* Efecto al pasar el mouse sobre los iconos del footer */
 footer .social-icons a:hover {
   color: #857a4f;
   transform: scale(1.2) rotate(-5deg);
 }
 
-/* ===== Diálogo flotante de comentarios ===== */
-/* Aviso flotante que aparece al enviar/cargar comentarios */
+/* ===== Diálogo flotante ===== */
 .dialogo-enviado {
   position: fixed;
   bottom: 30px;
   right: 30px;
   background: rgba(255, 204, 0, 0.95);
   color: #000;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   font-weight: bold;
   padding: 15px 25px;
   border-radius: 8px;
@@ -353,21 +290,9 @@ footer .social-icons a:hover {
   animation: fadeInOut 3s ease forwards;
   z-index: 9999;
 }
-
-/* Animación de entrada y salida del diálogo flotante */
 @keyframes fadeInOut {
   0% { opacity: 0; transform: translateY(20px); }
   10% { opacity: 1; transform: translateY(0); }
   90% { opacity: 1; transform: translateY(0); }
   100% { opacity: 0; transform: translateY(20px); }
 }
-
-
-
-
-
-
-
-
-
-

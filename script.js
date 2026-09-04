@@ -44,11 +44,58 @@ function aplicarSombrasOndulantes() {
 aplicarSombrasOndulantes();
 
 // ===== Tarjetas de certificaciones expandibles =====
-// Las tarjetas comienzan compactas y muestran la imagen completa al pulsarlas.
-document.querySelectorAll(".certificate-card").forEach((tarjeta) => {
+// Las tarjetas comienzan compactas. Al pulsarlas ocupan la fila completa y
+// muestran el certificado entero; solo una puede estar abierta a la vez.
+const tarjetasCertificado = document.querySelectorAll(".certificate-card");
+
+// Textos del aviso que indica qué pasa al pulsar la tarjeta
+const TEXTO_AMPLIAR = "Pulsa para ampliar el certificado";
+const TEXTO_CERRAR = "Pulsa para cerrar";
+
+// Abre o cierra una tarjeta concreta y sincroniza clases, accesibilidad y aviso
+function fijarEstadoCertificado(tarjeta, expandida) {
+  const columna = tarjeta.closest(".certificate-col"); // Columna que la contiene
+  const aviso = tarjeta.querySelector(".certificate-hint"); // Texto de ayuda
+
+  tarjeta.classList.toggle("is-expanded", expandida);
+  tarjeta.setAttribute("aria-expanded", String(expandida));
+
+  // La columna se ensancha a toda la fila para que el certificado se lea
+  if (columna) {
+    columna.classList.toggle("is-expanded", expandida);
+  }
+
+  if (aviso) {
+    aviso.textContent = expandida ? TEXTO_CERRAR : TEXTO_AMPLIAR;
+  }
+}
+
+// Cierra todas las tarjetas menos la indicada (null cierra todas)
+function cerrarOtrosCertificados(tarjetaActiva) {
+  tarjetasCertificado.forEach((tarjeta) => {
+    if (tarjeta !== tarjetaActiva && tarjeta.classList.contains("is-expanded")) {
+      fijarEstadoCertificado(tarjeta, false);
+    }
+  });
+}
+
+tarjetasCertificado.forEach((tarjeta) => {
+  // Aviso de interacción: se agrega desde JS porque sin JS no habría ampliación
+  const aviso = document.createElement("span");
+  aviso.className = "certificate-hint";
+  aviso.textContent = TEXTO_AMPLIAR;
+  tarjeta.querySelector(".card-body")?.appendChild(aviso);
+
   const alternarCertificado = () => {
-    const estaExpandida = tarjeta.classList.toggle("is-expanded");
-    tarjeta.setAttribute("aria-expanded", String(estaExpandida));
+    const seVaAExpandir = !tarjeta.classList.contains("is-expanded");
+
+    cerrarOtrosCertificados(tarjeta); // Solo una tarjeta abierta a la vez
+    fijarEstadoCertificado(tarjeta, seVaAExpandir);
+
+    // Al abrirla se lleva a la vista, ya que la tarjeta crece bastante
+    if (seVaAExpandir) {
+      tarjeta.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
   };
 
   tarjeta.addEventListener("click", alternarCertificado);
@@ -58,6 +105,13 @@ document.querySelectorAll(".certificate-card").forEach((tarjeta) => {
       alternarCertificado();
     }
   });
+});
+
+// La tecla Escape cierra el certificado que esté abierto
+document.addEventListener("keydown", (evento) => {
+  if (evento.key === "Escape") {
+    cerrarOtrosCertificados(null);
+  }
 });
 
 // ===== Logo girando hacia la izquierda con rebote =====
