@@ -233,6 +233,126 @@ h2 {
   }
 }
 
+/* ===== Resumen (currículum web) ===== */
+#resume h2 { font-size: 2.5rem; font-style: italic; }
+.resume-intro {
+  color: rgba(255, 255, 255, 0.85);
+}
+/* La tarjeta completa es el enlace al currículum web */
+.resume-tab {
+  display: block;
+  overflow: hidden;
+  text-decoration: none;
+  background-color: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.resume-tab:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.6);
+  border-color: rgba(156,145,99,0.7);
+}
+.resume-tab:focus-visible {
+  outline: 3px solid #9c9163;
+  outline-offset: 4px;
+}
+/* Barra superior que imita la pestaña del navegador con la ruta del sitio */
+.resume-tab-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.08);
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+}
+.resume-dots {
+  display: flex;
+  gap: 5px;
+}
+.resume-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.35);
+}
+/* Vista previa recortada: solo el encabezado del currículum */
+.resume-preview {
+  height: 170px;
+  overflow: hidden;
+  background: #2a2f36;
+}
+.resume-image {
+  display: block;
+  width: 100%;
+  object-fit: cover;
+  object-position: top center;
+  height: 100%;
+}
+.resume-tab .card-title,
+.resume-tab .card-text {
+  color: #fff;
+}
+@media (max-width: 576px) {
+  .resume-preview { height: 140px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .resume-tab { transition: none; }
+  .resume-tab:hover { transform: none; }
+}
+
+/* ===== Manejo de programas (tecnologías) ===== */
+#skills h2 { font-size: 2.5rem; font-style: italic; }
+.skills-intro {
+  color: rgba(255, 255, 255, 0.85);
+}
+/* Lista en columnas: una sola columna en móvil, dos desde tablet */
+.skills-list {
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+@media (min-width: 768px) {
+  .skills-list { grid-template-columns: repeat(2, 1fr); }
+}
+/* Cada elemento de la lista: logo a la izquierda y nombre a la derecha */
+.skill-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 18px;
+  background-color: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+  transition: transform 0.3s ease, border-color 0.3s ease;
+}
+.skill-item:hover {
+  transform: translateX(5px);
+  border-color: rgba(156,145,99,0.7);
+}
+.skill-logo {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  object-fit: contain;
+}
+/* Logos monocromos oscuros: se invierten para contrastar con el fondo */
+.skill-logo-invert {
+  filter: invert(1);
+}
+.skill-name {
+  color: #fff;
+  font-size: 1.05rem;
+}
+@media (prefers-reduced-motion: reduce) {
+  .skill-item { transition: none; }
+  .skill-item:hover { transform: none; }
+}
+
 /* ===== Contacto ===== */
 #contact h2 { font-size: 2.5rem; font-style: italic; }
 .social-icons {
