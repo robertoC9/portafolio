@@ -322,9 +322,18 @@ function cargarComentarios(idLista) {
     const quitarEscribiendo = mostrarEscribiendo();
 
     try {
-      await enviarAWhatsapp(texto);
+      const datos = await enviarAWhatsapp(texto);
       quitarEscribiendo();
-      agregarMensaje("¡Listo! Le envié tu mensaje por WhatsApp. Te responderá en cuanto lo vea.", "bot");
+
+      // El servidor indica si el mensaje llego a WhatsApp o si solo quedo
+      // registrado. Se avisa lo que de verdad ocurrio, sin prometer un envio
+      // que no se hizo.
+      if (datos.entregado) {
+        agregarMensaje("¡Listo! Le envié tu mensaje por WhatsApp. Te responderá en cuanto lo vea.", "bot");
+      } else {
+        agregarMensaje("Tu mensaje quedó registrado y Roberto lo revisará pronto. Si es urgente, escríbele al correo.", "bot");
+      }
+
       agregarMensaje("Puedes seguir escribiendo si quieres añadir algo más.", "aviso");
       entrada.placeholder = "Escribe otro mensaje...";
     } catch (error) {

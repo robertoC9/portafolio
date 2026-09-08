@@ -146,66 +146,157 @@ function superaLimiteDeEnvios(ip) {
   return false;
 }
 
-// ===== Envío del mensaje al WhatsApp de destino =====
-// Cada proveedor recibe el mismo texto ya armado. Si no hay proveedor
-// configurado, el mensaje se guarda en un archivo local.
-async function entregarEnWhatsapp(texto) {
-  // --- CallMeBot: servicio gratuito para enviarse mensajes a uno mismo ---
+// ===== Estado de la configuración =====
+// Indica si hay proveedor y credenciales suficientes para entregar en WhatsApp.
+// No devuelve el número ni las claves: solo si están presentes o no.
+function revisarConfiguracion() {
+  const faltantes = [];
+
+  if (!WHATSAPP_TO) faltantes.push("WHATSAPP_TO");
+
   if (WHATSAPP_PROVIDER === "callmebot") {
-    const url =
-      "https://api.callmebot.com/whatsapp.php" +
-      `?phone=${encodeURIComponent(WHATSAPP_TO)}` +
-      `&text=${encodeURIComponent(texto)}` +
-      `&apikey=${encodeURIComponent(process.env.CALLMEBOT_APIKEY || "")}`;
-
-    const respuesta = await fetch(url);
-    if (!respuesta.ok) {
-      throw new Error(`CallMeBot respondio ${respuesta.status}`);
-    }
-    return;
+    if (!process.env.CALLMEBOT_APIKEY) faltantes.push("CALLMEBOT_APIKEY");
+  } else if (WHATSAPP_PROVIDER === "twilio") {
+    if (!process.env.TWILIO_ACCOUNT_SID) faltantes.push("TWILIO_ACCOUNT_SID");
+    if (!process.env.TWILIO_AUTH_TOKEN) faltantes.push("TWILIO_AUTH_TOKEN");
+    if (!process.env.TWILIO_FROM) faltantes.push("TWILIO_FROM");
+  } else {
+    faltantes.push("WHATSAPP_PROVIDER");
   }
 
-  // --- Twilio: número virtual de WhatsApp (uso profesional) ---
-  if (WHATSAPP_PROVIDER === "twilio") {
-    const sid = process.env.TWILIO_ACCOUNT_SID || "";
-    const token = process.env.TWILIO_AUTH_TOKEN || "";
-    // Número virtual de Twilio, con el formato whatsapp:<numero>
-    const desde = process.env.TWILIO_FROM || "";
+  return {
+    proveedor: WHATSAPP_PROVIDER || "(sin configurar)",
+    listo: faltantes.length === 0,
+    faltantes,
+  };
+}
 
-    const respuesta = await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
-      {
-        method: "POST",
-        headers: {
-          // Twilio se autentica con HTTP Basic: sid como usuario, token como clave
-          Authorization:
-            "Basic " + Buffer.from(`${sid}:${token}`).toString("base64"),
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          From: desde,
-          To: `whatsapp:${WHATSAPP_TO}`,
-          Body: texto,
-        }),
-      }
-    );
-
-    if (!respuesta.ok) {
-      const detalle = await respuesta.text();
-      throw new Error(`Twilio respondio ${respuesta.status}: ${detalle}`);
-    }
-    return;
-  }
-
-  // --- Sin proveedor: se guarda en un archivo para no perder el mensaje ---
-  console.warn(
-    "WHATSAPP_PROVIDER no configurado: el mensaje se guarda en mensajes-whatsapp.txt"
-  );
+// ===== Respaldo en archivo =====
+// Se guarda SIEMPRE, antes de intentar la entrega, para que ningún mensaje se
+// pierda aunque el proveedor falle o todavía no esté configurado.
+async function guardarRespaldo(texto) {
   await fs.promises.appendFile(
     rutaArchivoMensajes,
     `${texto}\n${"-".repeat(50)}\n`,
     "utf8"
   );
+}
+
+// ===== Envío por CallMeBot =====
+// Ojo: CallMeBot responde HTTP 200 incluso cuando falla (clave inválida, API
+// sin activar, número no autorizado) y explica el problema en el cuerpo de la
+// respuesta. Por eso no basta con mirar el código de estado: hay que leer el
+// texto, o los errores pasarían por envíos correctos y se perderían mensajes.
+async function enviarPorCallmebot(texto) {
+  const url =
+    "https://api.callmebot.com/whatsapp.php" +
+    `?phone=${encodeURIComponent(WHATSAPP_TO)}` +
+    `&text=${encodeURIComponent(texto)}` +
+    `&apikey=${encodeURIComponent(process.env.CALLMEBOT_APIKEY || "")}`;
+
+  const respuesta = await fetch(url);
+  const cuerpo = (await respuesta.text()).trim();
+
+  if (!respuesta.ok) {
+    throw new Error(`CallMeBot respondio ${respuesta.status}: ${cuerpo.slice(0, 200)}`);
+  }
+
+  // Señales de fallo que CallMeBot devuelve con estado 200
+  const cuerpoMinuscula = cuerpo.toLowerCase();
+  const señalesDeError = [
+    "error",
+    "apikey",
+    "api key",
+    "not authorized",
+    "no autorizado",
+    "invalid",
+    "you need to",
+    "activate",
+  ];
+
+  // "queued" o "sent" confirman que el mensaje entró en la cola de envío
+  const pareceExito =
+    cuerpoMinuscula.includes("queued") || cuerpoMinuscula.includes("sent");
+
+  if (!pareceExito && señalesDeError.some((s) => cuerpoMinuscula.includes(s))) {
+    throw new Error(`CallMeBot rechazo el envio: ${cuerpo.slice(0, 200)}`);
+  }
+}
+
+// ===== Envío por Twilio =====
+async function enviarPorTwilio(texto) {
+  const sid = process.env.TWILIO_ACCOUNT_SID || "";
+  const token = process.env.TWILIO_AUTH_TOKEN || "";
+  // Número virtual de Twilio, con el formato whatsapp:<numero>
+  const desde = process.env.TWILIO_FROM || "";
+
+  const respuesta = await fetch(
+    `https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`,
+    {
+      method: "POST",
+      headers: {
+        // Twilio se autentica con HTTP Basic: sid como usuario, token como clave
+        Authorization:
+          "Basic " + Buffer.from(`${sid}:${token}`).toString("base64"),
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        From: desde,
+        To: `whatsapp:${WHATSAPP_TO}`,
+        Body: texto,
+      }),
+    }
+  );
+
+  const cuerpo = await respuesta.text();
+
+  if (!respuesta.ok) {
+    throw new Error(`Twilio respondio ${respuesta.status}: ${cuerpo.slice(0, 200)}`);
+  }
+}
+
+// ===== Envío del mensaje al WhatsApp de destino =====
+// Devuelve "whatsapp" si se entregó, o "respaldo" si solo quedó guardado.
+async function entregarEnWhatsapp(texto) {
+  const configuracion = revisarConfiguracion();
+
+  // Sin credenciales completas no se intenta la entrega: el mensaje ya quedó
+  // guardado en el archivo de respaldo por quien llama a esta función.
+  if (!configuracion.listo) {
+    console.warn(
+      `WhatsApp sin configurar (faltan: ${configuracion.faltantes.join(", ")}). ` +
+        "El mensaje quedo en mensajes-whatsapp.txt"
+    );
+    return "respaldo";
+  }
+
+  if (WHATSAPP_PROVIDER === "callmebot") {
+    await enviarPorCallmebot(texto);
+  } else if (WHATSAPP_PROVIDER === "twilio") {
+    await enviarPorTwilio(texto);
+  }
+
+  return "whatsapp";
+}
+
+// ===== Ruta GET /send/estado =====
+// Diagnóstico del chatbot: dice si el envío a WhatsApp está listo y qué
+// variables de entorno faltan. Nunca revela el número ni las claves.
+app.get("/send/estado", (req, res) => {
+  res.json(revisarConfiguracion());
+});
+
+// ===== Respuesta para los envíos descartados =====
+// A los bots detectados se les contesta un éxito normal, para no darles pistas
+// de que fueron filtrados. La respuesta imita exactamente la de un envío real
+// en la configuración actual: si tuviera otra forma, un bot podría comparar
+// ambas respuestas y darse cuenta de que se le está descartando.
+function respuestaSimulada() {
+  return {
+    mensaje: "Mensaje recibido",
+    entregado: revisarConfiguracion().listo,
+    via: revisarConfiguracion().listo ? "whatsapp" : "respaldo",
+  };
 }
 
 // ===== Ruta POST /send =====
@@ -223,7 +314,7 @@ app.post("/send", async (req, res) => {
   // normal a propósito, para no darle pistas de que fue detectado.
   if (honeypot) {
     console.warn("Envio descartado: honeypot relleno");
-    return res.json({ mensaje: "Mensaje enviado" });
+    return res.json(respuestaSimulada());
   }
 
   // ----- Filtro 2: velocidad de envío -----
@@ -232,7 +323,7 @@ app.post("/send", async (req, res) => {
   // falsearse, por eso no sustituye al honeypot ni al límite por IP.
   if (msDesdeCarga > 0 && msDesdeCarga < MS_MINIMO_HUMANO) {
     console.warn(`Envio descartado: demasiado rapido (${msDesdeCarga} ms)`);
-    return res.json({ mensaje: "Mensaje enviado" });
+    return res.json(respuestaSimulada());
   }
 
   // ----- Validaciones normales -----
@@ -251,12 +342,6 @@ app.post("/send", async (req, res) => {
       .json({ error: "Demasiados mensajes seguidos, intenta mas tarde" });
   }
 
-  // Sin número de destino configurado no se puede entregar nada
-  if (!WHATSAPP_TO) {
-    console.error("Falta la variable de entorno WHATSAPP_TO");
-    return res.status(500).json({ error: "Servicio no disponible" });
-  }
-
   // Texto que llega al WhatsApp de destino
   const texto =
     "Nuevo mensaje desde el portafolio\n" +
@@ -264,12 +349,23 @@ app.post("/send", async (req, res) => {
     `Mensaje: ${mensaje}\n` +
     `Fecha: ${new Date().toLocaleString("es-CL")}`;
 
+  // Se guarda antes de intentar la entrega: si el proveedor falla o no está
+  // configurado, el mensaje sigue existiendo y no se pierde el contacto.
   try {
-    await entregarEnWhatsapp(texto);
-    res.json({ mensaje: "Mensaje enviado" });
+    await guardarRespaldo(texto);
+  } catch (err) {
+    console.error("Error al guardar el respaldo del mensaje:", err);
+  }
+
+  try {
+    const via = await entregarEnWhatsapp(texto);
+    // "via" distingue si llegó a WhatsApp o si solo quedó guardado, para que
+    // el chatbot no le prometa a la visita un envío que no ocurrió.
+    res.json({ mensaje: "Mensaje recibido", entregado: via === "whatsapp", via });
   } catch (err) {
     console.error("Error al enviar el mensaje a WhatsApp:", err);
-    res.status(502).json({ error: "No se pudo enviar el mensaje" });
+    // El mensaje está a salvo en el respaldo, así que no es un fallo total
+    res.json({ mensaje: "Mensaje recibido", entregado: false, via: "respaldo" });
   }
 });
 
@@ -287,5 +383,18 @@ app.get("/", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`);
   console.log(`Comentarios guardados en: ${rutaArchivoComentarios}`);
+
+  // Estado del chatbot de WhatsApp, visible en los logs del hosting.
+  // Nunca se imprime el número ni las claves, solo qué variables faltan.
+  const configuracion = revisarConfiguracion();
+  if (configuracion.listo) {
+    console.log(`Chatbot de WhatsApp listo (proveedor: ${configuracion.proveedor})`);
+  } else {
+    console.warn(
+      "Chatbot de WhatsApp SIN ENTREGA: faltan las variables de entorno " +
+        `${configuracion.faltantes.join(", ")}. ` +
+        "Los mensajes se guardan en mensajes-whatsapp.txt"
+    );
+  }
 });
 
