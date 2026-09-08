@@ -215,6 +215,152 @@ function cargarComentarios(idLista) {
     });
 }
 
+// ===== Chatbot de WhatsApp de la seccion de contacto =====
+// Conversacion guiada que pide el nombre y el mensaje, y los envia al endpoint
+// /send. El numero de WhatsApp de destino NO esta en este archivo ni llega
+// nunca al navegador: lo conoce solo el servidor. Ademas del honeypot del
+// formulario, se mide el tiempo que tarda el envio como filtro extra: los bots
+// rellenan y envian en milisegundos.
+(function iniciarChatbotWhatsapp() {
+  const chat = document.getElementById("waChat"); // Contenedor del chatbot
+  if (!chat) return; // Si la seccion no esta en la pagina, no se hace nada
+
+  const formulario = document.getElementById("waForm");
+  const entrada = document.getElementById("waInput");
+  const boton = document.getElementById("waSend");
+  const hilo = document.getElementById("waLog");
+  const trampa = document.getElementById("waTrap"); // Campo honeypot
+  const estadoTexto = document.getElementById("waStatus");
+
+  const MOMENTO_CARGA = Date.now(); // Marca de tiempo de apertura del chat
+  const LARGO_MAXIMO = 600; // Debe coincidir con el limite del servidor
+
+  let paso = "nombre"; // Paso actual de la conversacion: "nombre" o "mensaje"
+  let nombreVisita = ""; // Nombre que indica la persona
+  let enviando = false; // Evita envios simultaneos
+
+  // ----- Pintar una burbuja en el hilo -----
+  // tipo: "bot" (asistente), "user" (visita) o "aviso" (nota del sistema)
+  function agregarMensaje(texto, tipo) {
+    const burbuja = document.createElement("div");
+    burbuja.className = `wa-msg wa-msg-${tipo}`;
+    burbuja.textContent = texto; // textContent evita inyeccion de HTML
+    hilo.appendChild(burbuja);
+    hilo.scrollTop = hilo.scrollHeight; // Baja el hilo al ultimo mensaje
+    return burbuja;
+  }
+
+  // ----- Indicador "escribiendo..." -----
+  // Se muestra un instante antes de cada respuesta para que el chat se sienta
+  // conversacional; devuelve una funcion que lo retira.
+  function mostrarEscribiendo() {
+    const puntos = document.createElement("div");
+    puntos.className = "wa-msg wa-msg-bot wa-typing";
+    puntos.innerHTML = "<span></span><span></span><span></span>";
+    hilo.appendChild(puntos);
+    hilo.scrollTop = hilo.scrollHeight;
+    return () => puntos.remove();
+  }
+
+  // Responde como el asistente tras una pequena pausa
+  function responderBot(texto, espera = 600) {
+    const quitarEscribiendo = mostrarEscribiendo();
+    setTimeout(() => {
+      quitarEscribiendo();
+      agregarMensaje(texto, "bot");
+    }, espera);
+  }
+
+  // ----- Envio al backend -----
+  // El servidor recibe nombre, mensaje, el honeypot y los milisegundos que
+  // pasaron desde que se abrio el chat, y decide si reenviarlo a WhatsApp.
+  async function enviarAWhatsapp(mensaje) {
+    const respuesta = await fetch("/send", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        nombre: nombreVisita,
+        mensaje,
+        website: trampa ? trampa.value : "", // Honeypot: debe llegar vacio
+        msDesdeCarga: Date.now() - MOMENTO_CARGA,
+      }),
+    });
+
+    const datos = await respuesta.json().catch(() => ({}));
+
+    if (!respuesta.ok) {
+      throw new Error(datos.error || "No se pudo enviar el mensaje");
+    }
+
+    return datos;
+  }
+
+  // ----- Bloquear o desbloquear la barra de escritura -----
+  function fijarBloqueo(bloqueado) {
+    enviando = bloqueado;
+    entrada.disabled = bloqueado;
+    boton.disabled = bloqueado;
+    if (!bloqueado) entrada.focus();
+  }
+
+  // ----- Paso 1: guardar el nombre -----
+  function procesarNombre(texto) {
+    if (texto.length < 2) {
+      responderBot("Necesito un nombre de al menos 2 letras para presentarte.");
+      return;
+    }
+
+    nombreVisita = texto.slice(0, 60); // Mismo limite que valida el servidor
+    paso = "mensaje";
+    entrada.placeholder = "Cuéntame en qué te ayudo...";
+    responderBot(`Un gusto, ${nombreVisita}. Ahora escríbeme tu mensaje y se lo hago llegar a Roberto por WhatsApp.`);
+  }
+
+  // ----- Paso 2: enviar el mensaje -----
+  async function procesarMensaje(texto) {
+    fijarBloqueo(true);
+    const quitarEscribiendo = mostrarEscribiendo();
+
+    try {
+      await enviarAWhatsapp(texto);
+      quitarEscribiendo();
+      agregarMensaje("¡Listo! Le envié tu mensaje por WhatsApp. Te responderá en cuanto lo vea.", "bot");
+      agregarMensaje("Puedes seguir escribiendo si quieres añadir algo más.", "aviso");
+      entrada.placeholder = "Escribe otro mensaje...";
+    } catch (error) {
+      quitarEscribiendo();
+      console.error("Error al enviar el mensaje de WhatsApp:", error);
+      agregarMensaje("No pude enviar el mensaje ahora mismo. Intenta de nuevo en un momento o escríbeme al correo.", "bot");
+    } finally {
+      fijarBloqueo(false);
+    }
+  }
+
+  // ----- Envio del formulario -----
+  formulario.addEventListener("submit", (evento) => {
+    evento.preventDefault();
+    if (enviando) return;
+
+    const texto = entrada.value.trim().slice(0, LARGO_MAXIMO);
+    if (!texto) return;
+
+    agregarMensaje(texto, "user"); // Se muestra lo que escribio la visita
+    entrada.value = "";
+
+    if (paso === "nombre") {
+      procesarNombre(texto);
+    } else {
+      procesarMensaje(texto);
+    }
+  });
+
+  // ----- Saludo inicial -----
+  if (estadoTexto) {
+    estadoTexto.textContent = "Tu mensaje llega directo a su WhatsApp";
+  }
+  responderBot("¡Hola! Soy el asistente de Roberto. ¿Cómo te llamas?", 400);
+})();
+
 // ===== Mostrar dialogo flotante =====
 // Crea y muestra un aviso flotante temporal en la esquina inferior derecha
 function mostrarDialogo(mensaje) {

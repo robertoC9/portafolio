@@ -1,0 +1,7 @@
+# Variables de entorno: contienen el numero de WhatsApp y las claves de los
+# proveedores de envio. Nunca deben subirse al repositorio publico.
+.env
+.env.local
+
+# Mensajes recibidos por el chatbot cuando no hay proveedor configurado
+mensajes-whatsapp.txt

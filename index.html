@@ -364,6 +364,47 @@
         <!-- Enlace a X (Twitter) -->
         <a href="https://x.com/RobertoACarbone" target="_blank" rel="noreferrer"><i class="bi bi-twitter-x"></i> X</a>
       </div>
+
+      <!-- ===== Chatbot de WhatsApp (con honeypot antibots) =====
+           El número de destino NO aparece en esta página ni en el JS: vive solo
+           en el servidor, en la variable de entorno WHATSAPP_TO. El navegador
+           únicamente envía el mensaje por POST al endpoint genérico /send, que
+           es quien lo reenvía a WhatsApp. Así nadie puede leer el número desde
+           el código fuente del sitio. -->
+      <div class="wa-chat" id="waChat">
+        <!-- Cabecera del chat: identidad del asistente, sin datos de contacto -->
+        <div class="wa-chat-header">
+          <span class="wa-chat-avatar" aria-hidden="true"><i class="bi bi-whatsapp"></i></span>
+          <span class="wa-chat-id">
+            <span class="wa-chat-name">Asistente de Roberto</span>
+            <span class="wa-chat-status" id="waStatus">Tu mensaje llega directo a su WhatsApp</span>
+          </span>
+        </div>
+
+        <!-- Hilo de la conversación: el JS inserta aquí cada burbuja -->
+        <div class="wa-chat-log" id="waLog" role="log" aria-live="polite" aria-label="Conversación con el asistente"></div>
+
+        <!-- Formulario de envío -->
+        <form class="wa-chat-form" id="waForm" autocomplete="off">
+          <!-- Honeypot (trampa para bots): queda fuera de la pantalla, sin foco
+               por teclado y oculto a los lectores de pantalla, así que una
+               persona nunca lo ve ni lo rellena. Los bots que completan todos
+               los campos del formulario sí lo hacen, y el servidor descarta
+               en silencio cualquier envío que llegue con este campo lleno. -->
+          <div class="wa-trap" aria-hidden="true">
+            <label for="waTrap">No completar este campo</label>
+            <input type="text" id="waTrap" name="website" tabindex="-1" autocomplete="off">
+          </div>
+
+          <label class="wa-sr-only" for="waInput">Escribe tu mensaje para el asistente</label>
+          <input class="wa-chat-input" type="text" id="waInput" name="texto" maxlength="600" placeholder="Escribe aquí..." required>
+
+          <button class="wa-chat-send" type="submit" id="waSend">
+            <i class="bi bi-send-fill" aria-hidden="true"></i>
+            <span class="wa-sr-only">Enviar mensaje</span>
+          </button>
+        </form>
+      </div>
     </div>
   </section>
 

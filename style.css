@@ -371,6 +371,211 @@ h2 {
   transform: scale(1.2);
 }
 
+/* ===== Contacto: chatbot de WhatsApp ===== */
+/* Todos los selectores de este bloque están limitados a la sección #contact y
+   a clases nuevas con prefijo .wa-, así que no afectan a ningún otro elemento
+   del sitio. No se declaran fuentes ni colores nuevos: se reutilizan los del
+   tema (negro translúcido, borde blanco tenue y dorado #9c9163) y la
+   tipografía se hereda del body. */
+#contact .wa-chat {
+  max-width: 520px;
+  margin: 32px auto 0;
+  text-align: left; /* la sección está centrada; el chat se lee mejor alineado */
+  background-color: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+/* Cabecera con el avatar y el nombre del asistente */
+#contact .wa-chat-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+#contact .wa-chat-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border-radius: 50%;
+  background: rgba(156, 145, 99, 0.25);
+  border: 1px solid rgba(156, 145, 99, 0.7);
+  color: #9c9163;
+  font-size: 1.2rem;
+}
+#contact .wa-chat-id {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+}
+#contact .wa-chat-name {
+  color: #fff;
+  font-weight: 600;
+}
+#contact .wa-chat-status {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Hilo de la conversación: se desplaza si crece */
+#contact .wa-chat-log {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 260px;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+/* Burbujas de mensaje */
+#contact .wa-msg {
+  max-width: 82%;
+  padding: 9px 13px;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  white-space: pre-wrap; /* respeta los saltos de línea del texto */
+  word-break: break-word;
+}
+/* Mensajes del asistente: alineados a la izquierda, fondo tenue */
+#contact .wa-msg-bot {
+  align-self: flex-start;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-bottom-left-radius: 4px;
+  color: #fff;
+}
+/* Mensajes de la visita: alineados a la derecha, con el dorado del tema */
+#contact .wa-msg-user {
+  align-self: flex-end;
+  background: rgba(156, 145, 99, 0.28);
+  border: 1px solid rgba(156, 145, 99, 0.6);
+  border-bottom-right-radius: 4px;
+  color: #fff;
+}
+/* Avisos del sistema (errores, confirmaciones) centrados y más pequeños */
+#contact .wa-msg-aviso {
+  align-self: center;
+  max-width: 100%;
+  background: none;
+  border: none;
+  padding: 2px 0;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+}
+
+/* Indicador "escribiendo..." con tres puntos que laten */
+#contact .wa-typing {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  padding: 12px 13px;
+}
+#contact .wa-typing span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7);
+  animation: waLatido 1.2s infinite ease-in-out;
+}
+#contact .wa-typing span:nth-child(2) { animation-delay: 0.2s; }
+#contact .wa-typing span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes waLatido {
+  0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
+  30%           { opacity: 1;   transform: translateY(-3px); }
+}
+
+/* Barra de escritura */
+#contact .wa-chat-form {
+  position: relative; /* referencia para colocar el honeypot fuera de pantalla */
+  display: flex;
+  gap: 10px;
+  padding: 12px 16px 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+#contact .wa-chat-input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 10px 14px;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 22px;
+  font: inherit; /* misma tipografía que el resto del sitio */
+}
+#contact .wa-chat-input::placeholder { color: #ccc; }
+#contact .wa-chat-input:focus {
+  outline: none;
+  border-color: rgba(156, 145, 99, 0.9);
+}
+#contact .wa-chat-send {
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: 50%;
+  background-color: #9c9163;
+  color: #fff;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s, transform 0.3s;
+}
+#contact .wa-chat-send:hover:not(:disabled) {
+  background-color: #857a4f;
+  transform: scale(1.05);
+}
+#contact .wa-chat-send:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+#contact .wa-chat-input:focus-visible,
+#contact .wa-chat-send:focus-visible {
+  outline: 3px solid #9c9163;
+  outline-offset: 3px;
+}
+
+/* Honeypot: se saca de la pantalla en lugar de usar display:none, porque
+   muchos bots ignoran los campos ocultos con display:none pero sí rellenan
+   los que están presentes en el DOM. */
+#contact .wa-trap {
+  position: absolute;
+  left: -9999px;
+  top: auto;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+
+/* Etiquetas solo para lectores de pantalla */
+#contact .wa-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 576px) {
+  #contact .wa-chat-log { height: 230px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  #contact .wa-typing span { animation: none; }
+  #contact .wa-chat-send { transition: none; }
+  #contact .wa-chat-send:hover:not(:disabled) { transform: none; }
+}
+
 /* ===== Footer ===== */
 footer {
   background: linear-gradient(135deg, #000000, #1a1a1a);
