@@ -11,8 +11,10 @@
   "author": "Debora",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^5.2.1",
-    "cors": "^2.8.5"
+    "gsap": "^3.15.0",
+    "three": "^0.186.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.0"

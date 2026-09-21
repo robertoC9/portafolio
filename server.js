@@ -12,6 +12,7 @@ const express = require("express"); // Framework web para Node.js
 const cors = require("cors"); // Middleware que permite peticiones de otros orígenes (CORS)
 const fs = require("fs"); // Módulo nativo para trabajar con archivos
 const path = require("path"); // Módulo nativo para manejar rutas
+const crypto = require("crypto"); // Comparación segura de tokens e identificadores
 
 // Creación de la aplicación Express
 const app = express();
@@ -23,6 +24,7 @@ const PORT = process.env.PORT || 3000;
 const rutaArchivoComentarios = path.join(__dirname, "comentarios.txt");
 
 // Middlewares globales
+app.disable("x-powered-by"); // No revela que el servidor usa Express
 app.use(cors()); // Habilita CORS para permitir peticiones desde otros dominios
 app.use(express.json({ limit: "20kb" })); // Permite recibir JSON con un límite de 20 KB
 
@@ -88,27 +90,45 @@ app.get("/comentarios", (req, res) => {
 });
 
 // ============================================================
-// CHATBOT DE WHATSAPP: ENDPOINT GENÉRICO /send
+// CHATBOT: ENDPOINT /send, AVISO SIN CONTENIDO Y BANDEJA PRIVADA
 // ============================================================
-// El número de WhatsApp de destino se lee SOLO de la variable de entorno
-// WHATSAPP_TO y nunca se envía al navegador ni se escribe en el repositorio,
-// así que no queda expuesto en el código fuente público del sitio.
+// PRIVACIDAD DEL CONTENIDO
+// WhatsApp solo cifra de extremo a extremo entre aplicaciones WhatsApp. En
+// cuanto un servidor envía por API, el proveedor procesa el texto en claro.
+// Para que nadie más lea los mensajes, aquí se separan las dos cosas:
+//
+//   1. El AVISO que viaja a WhatsApp es un texto fijo, sin nombre, sin el
+//      mensaje y sin enlaces con credenciales. El proveedor solo se entera de
+//      que llegó "un mensaje nuevo", nada más.
+//   2. El CONTENIDO se guarda únicamente en este servidor y se lee en la
+//      bandeja privada /bandeja, protegida por un token secreto.
+//
+// El número de destino también vive solo aquí, en WHATSAPP_TO: nunca se envía
+// al navegador ni se escribe en el repositorio.
 //
 // Variables de entorno (se configuran en el panel de Render, no en el código):
 //   WHATSAPP_TO        Número de destino en formato internacional, con el
-//                      prefijo del país (se configura en el panel del hosting)
-//   WHATSAPP_PROVIDER  "callmebot" | "twilio" | vacío (guarda en archivo)
+//                      prefijo del país
+//   WHATSAPP_PROVIDER  "callmebot" | "twilio" | vacío (solo guarda, sin aviso)
 //   CALLMEBOT_APIKEY   Clave de CallMeBot (si el proveedor es callmebot)
 //   TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_FROM  (si es twilio)
+//   BANDEJA_TOKEN      Clave secreta para abrir /bandeja (invéntala larga)
 // ============================================================
 
 // Configuración leída del entorno
 const WHATSAPP_TO = String(process.env.WHATSAPP_TO || "").trim();
 const WHATSAPP_PROVIDER = String(process.env.WHATSAPP_PROVIDER || "").trim().toLowerCase();
+const BANDEJA_TOKEN = String(process.env.BANDEJA_TOKEN || "").trim();
 
-// Archivo de respaldo: si no hay proveedor configurado, los mensajes se guardan
-// aquí para no perderlos (útil en desarrollo local)
-const rutaArchivoMensajes = path.join(__dirname, "mensajes-whatsapp.txt");
+// Aviso que llega a WhatsApp. Es deliberadamente genérico: no lleva el nombre,
+// ni el mensaje, ni un enlace con el token, porque cualquier dato que se ponga
+// aquí sí lo vería el proveedor de envío.
+const TEXTO_DEL_AVISO =
+  "Portafolio: tienes un mensaje nuevo. Revisa tu bandeja privada.";
+
+// Archivo donde se guarda el contenido de los mensajes (formato JSON por
+// líneas: una línea por mensaje, fácil de agregar sin releer todo el archivo)
+const rutaArchivoBandeja = path.join(__dirname, "mensajes-chatbot.jsonl");
 
 // Límites de validación (deben coincidir con los del frontend)
 const LARGO_MAXIMO_NOMBRE = 60;
@@ -153,6 +173,7 @@ function revisarConfiguracion() {
   const faltantes = [];
 
   if (!WHATSAPP_TO) faltantes.push("WHATSAPP_TO");
+  if (!BANDEJA_TOKEN) faltantes.push("BANDEJA_TOKEN");
 
   if (WHATSAPP_PROVIDER === "callmebot") {
     if (!process.env.CALLMEBOT_APIKEY) faltantes.push("CALLMEBOT_APIKEY");
@@ -171,15 +192,53 @@ function revisarConfiguracion() {
   };
 }
 
-// ===== Respaldo en archivo =====
-// Se guarda SIEMPRE, antes de intentar la entrega, para que ningún mensaje se
-// pierda aunque el proveedor falle o todavía no esté configurado.
-async function guardarRespaldo(texto) {
+// ===== Guardar el mensaje en la bandeja privada =====
+// El contenido se queda SOLO aquí. Se guarda antes de mandar el aviso, para
+// que ningún mensaje se pierda aunque el proveedor de avisos falle.
+async function guardarEnBandeja(nombre, mensaje) {
+  const registro = {
+    id: crypto.randomUUID(),
+    fecha: new Date().toISOString(),
+    nombre,
+    mensaje,
+    leido: false,
+  };
+
+  // JSON en una sola línea: se agrega al final sin releer el archivo completo
   await fs.promises.appendFile(
-    rutaArchivoMensajes,
-    `${texto}\n${"-".repeat(50)}\n`,
+    rutaArchivoBandeja,
+    `${JSON.stringify(registro)}\n`,
     "utf8"
   );
+
+  return registro;
+}
+
+// ===== Leer la bandeja privada =====
+// Devuelve los mensajes del más reciente al más antiguo. Las líneas corruptas
+// se ignoran para que un archivo dañado no tumbe la bandeja entera.
+async function leerBandeja() {
+  let contenido = "";
+
+  try {
+    contenido = await fs.promises.readFile(rutaArchivoBandeja, "utf8");
+  } catch (err) {
+    if (err.code === "ENOENT") return []; // Todavía no hay mensajes
+    throw err;
+  }
+
+  return contenido
+    .split(/\r?\n/)
+    .filter(Boolean)
+    .map((linea) => {
+      try {
+        return JSON.parse(linea);
+      } catch {
+        return null;
+      }
+    })
+    .filter(Boolean)
+    .reverse();
 }
 
 // ===== Envío por CallMeBot =====
@@ -255,25 +314,27 @@ async function enviarPorTwilio(texto) {
   }
 }
 
-// ===== Envío del mensaje al WhatsApp de destino =====
-// Devuelve "whatsapp" si se entregó, o "respaldo" si solo quedó guardado.
-async function entregarEnWhatsapp(texto) {
+// ===== Aviso a WhatsApp, sin contenido =====
+// Manda SIEMPRE el mismo texto fijo: el proveedor no recibe el nombre ni el
+// mensaje, así que no hay nada que pueda leer. Devuelve "whatsapp" si el aviso
+// salió, o "bandeja" si el mensaje solo quedó guardado.
+async function enviarAviso() {
   const configuracion = revisarConfiguracion();
 
-  // Sin credenciales completas no se intenta la entrega: el mensaje ya quedó
-  // guardado en el archivo de respaldo por quien llama a esta función.
+  // Sin credenciales completas no se intenta el aviso: el mensaje ya quedó
+  // guardado en la bandeja por quien llama a esta función.
   if (!configuracion.listo) {
     console.warn(
-      `WhatsApp sin configurar (faltan: ${configuracion.faltantes.join(", ")}). ` +
-        "El mensaje quedo en mensajes-whatsapp.txt"
+      `Avisos de WhatsApp sin configurar (faltan: ${configuracion.faltantes.join(", ")}). ` +
+        "El mensaje quedo guardado en la bandeja privada"
     );
-    return "respaldo";
+    return "bandeja";
   }
 
   if (WHATSAPP_PROVIDER === "callmebot") {
-    await enviarPorCallmebot(texto);
+    await enviarPorCallmebot(TEXTO_DEL_AVISO);
   } else if (WHATSAPP_PROVIDER === "twilio") {
-    await enviarPorTwilio(texto);
+    await enviarPorTwilio(TEXTO_DEL_AVISO);
   }
 
   return "whatsapp";
@@ -292,10 +353,11 @@ app.get("/send/estado", (req, res) => {
 // en la configuración actual: si tuviera otra forma, un bot podría comparar
 // ambas respuestas y darse cuenta de que se le está descartando.
 function respuestaSimulada() {
+  const listo = revisarConfiguracion().listo;
   return {
     mensaje: "Mensaje recibido",
-    entregado: revisarConfiguracion().listo,
-    via: revisarConfiguracion().listo ? "whatsapp" : "respaldo",
+    entregado: listo,
+    via: listo ? "whatsapp" : "bandeja",
   };
 }
 
@@ -342,32 +404,263 @@ app.post("/send", async (req, res) => {
       .json({ error: "Demasiados mensajes seguidos, intenta mas tarde" });
   }
 
-  // Texto que llega al WhatsApp de destino
-  const texto =
-    "Nuevo mensaje desde el portafolio\n" +
-    `Nombre: ${nombre}\n` +
-    `Mensaje: ${mensaje}\n` +
-    `Fecha: ${new Date().toLocaleString("es-CL")}`;
-
-  // Se guarda antes de intentar la entrega: si el proveedor falla o no está
-  // configurado, el mensaje sigue existiendo y no se pierde el contacto.
+  // El contenido se guarda en la bandeja privada de este servidor. Si esto
+  // falla, no hay nada que avisar: se corta aquí para no anunciar un mensaje
+  // que en realidad no quedó registrado en ninguna parte.
   try {
-    await guardarRespaldo(texto);
+    await guardarEnBandeja(nombre, mensaje);
   } catch (err) {
-    console.error("Error al guardar el respaldo del mensaje:", err);
+    console.error("Error al guardar el mensaje en la bandeja:", err);
+    return res.status(500).json({ error: "No se pudo registrar el mensaje" });
   }
 
   try {
-    const via = await entregarEnWhatsapp(texto);
-    // "via" distingue si llegó a WhatsApp o si solo quedó guardado, para que
-    // el chatbot no le prometa a la visita un envío que no ocurrió.
+    const via = await enviarAviso();
+    // "via" distingue si el aviso salió a WhatsApp o si el mensaje solo quedó
+    // en la bandeja, para que el chatbot no prometa algo que no ocurrió.
     res.json({ mensaje: "Mensaje recibido", entregado: via === "whatsapp", via });
   } catch (err) {
-    console.error("Error al enviar el mensaje a WhatsApp:", err);
-    // El mensaje está a salvo en el respaldo, así que no es un fallo total
-    res.json({ mensaje: "Mensaje recibido", entregado: false, via: "respaldo" });
+    console.error("Error al enviar el aviso a WhatsApp:", err);
+    // El mensaje ya está guardado, así que no es un fallo total
+    res.json({ mensaje: "Mensaje recibido", entregado: false, via: "bandeja" });
   }
 });
+
+// ============================================================
+// BANDEJA PRIVADA: AQUÍ SE LEEN LOS MENSAJES
+// ============================================================
+
+// ===== Verificación del token =====
+// Se comparan los bytes en tiempo constante con timingSafeEqual: una
+// comparación normal con === corta en el primer byte distinto, y ese pequeño
+// cambio de tiempo permitiría adivinar el token carácter por carácter.
+function tokenValido(tokenRecibido) {
+  if (!BANDEJA_TOKEN) return false; // Sin token configurado, no se abre nada
+
+  const esperado = Buffer.from(BANDEJA_TOKEN, "utf8");
+  const recibido = Buffer.from(String(tokenRecibido || ""), "utf8");
+
+  // timingSafeEqual exige la misma longitud, así que se compara aparte. La
+  // longitud del token no es un secreto útil por sí sola.
+  if (esperado.length !== recibido.length) return false;
+
+  return crypto.timingSafeEqual(esperado, recibido);
+}
+
+// ===== Middleware de acceso a la bandeja =====
+function exigirToken(req, res, next) {
+  // Cabeceras para que la bandeja no se guarde en cachés ni la indexen
+  res.set("Cache-Control", "no-store, max-age=0");
+  res.set("X-Robots-Tag", "noindex, nofollow");
+
+  // El token se acepta por cabecera o por parámetro de la URL. La cabecera es
+  // más discreta; el parámetro permite guardar la bandeja como favorito.
+  const token = req.get("X-Bandeja-Token") || req.query.token;
+
+  if (!tokenValido(token)) {
+    console.warn(`Acceso rechazado a la bandeja desde ${req.ip}`);
+    // 404 en lugar de 401: así la bandeja no se delata como algo que existe
+    return res.status(404).send("No encontrado");
+  }
+
+  next();
+}
+
+// ===== Escapado de HTML =====
+// El contenido lo escribe cualquier visitante del sitio, así que hay que
+// neutralizarlo antes de insertarlo en la página de la bandeja.
+function escaparHtml(texto) {
+  return String(texto)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+// ===== Ruta GET /bandeja =====
+// Página privada con los mensajes. Se genera aquí en lugar de servir un
+// archivo estático, porque cualquier archivo de la carpeta es público.
+app.get("/bandeja", exigirToken, async (req, res) => {
+  let mensajes = [];
+
+  try {
+    mensajes = await leerBandeja();
+  } catch (err) {
+    console.error("Error al leer la bandeja:", err);
+    return res.status(500).send("Error al leer la bandeja");
+  }
+
+  const sinLeer = mensajes.filter((m) => !m.leido).length;
+
+  // Tarjeta por mensaje, con el contenido ya escapado
+  const tarjetas = mensajes
+    .map((m) => {
+      const fecha = new Date(m.fecha).toLocaleString("es-CL");
+      const claseNuevo = m.leido ? "" : " nuevo";
+      const etiqueta = m.leido ? "" : '<span class="etiqueta">nuevo</span>';
+
+      return `
+      <article class="mensaje${claseNuevo}">
+        <header>
+          <strong>${escaparHtml(m.nombre)}</strong>${etiqueta}
+          <time>${escaparHtml(fecha)}</time>
+        </header>
+        <p>${escaparHtml(m.mensaje)}</p>
+      </article>`;
+    })
+    .join("");
+
+  const vacia = '<p class="vacia">Todavía no hay mensajes.</p>';
+
+  res.type("html").send(`<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Bandeja privada</title>
+  <style>
+    body { margin: 0; padding: 24px; background: #14171a; color: #fff;
+           font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .caja { max-width: 720px; margin: 0 auto; }
+    h1 { font-size: 1.5rem; color: #9c9163; margin: 0 0 4px; }
+    .resumen { color: rgba(255,255,255,0.6); font-size: 0.9rem; margin: 0 0 20px; }
+    .mensaje { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15);
+               border-radius: 14px; padding: 14px 16px; margin-bottom: 12px; }
+    .mensaje.nuevo { border-color: rgba(156,145,99,0.8); }
+    .mensaje header { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .mensaje time { margin-left: auto; font-size: 0.8rem; color: rgba(255,255,255,0.5); }
+    .mensaje p { margin: 0; white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
+    .etiqueta { background: #9c9163; color: #fff; font-size: 0.7rem; padding: 2px 8px;
+                border-radius: 10px; text-transform: uppercase; }
+    .vacia { color: rgba(255,255,255,0.5); }
+    button { background: #9c9163; color: #fff; border: none; border-radius: 20px;
+             padding: 9px 18px; font: inherit; cursor: pointer; }
+    button:hover { background: #857a4f; }
+    .aviso { margin-top: 24px; font-size: 0.8rem; color: rgba(255,255,255,0.45);
+             line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="caja">
+    <h1>Bandeja privada</h1>
+    <p class="resumen">${mensajes.length} mensaje(s), ${sinLeer} sin leer</p>
+    ${sinLeer > 0 ? '<p><button id="marcar">Marcar todos como leidos</button></p>' : ""}
+    ${mensajes.length ? tarjetas : vacia}
+    <p class="aviso">
+      El contenido de estos mensajes nunca sale de este servidor: a WhatsApp
+      solo viaja un aviso fijo, sin nombre ni texto.
+    </p>
+  </div>
+  <script>
+    // El token viaja en la URL de esta página; se reutiliza para marcar leidos
+    const boton = document.getElementById("marcar");
+    if (boton) {
+      boton.addEventListener("click", async () => {
+        boton.disabled = true;
+        const token = new URLSearchParams(location.search).get("token") || "";
+        await fetch("/bandeja/leidos?token=" + encodeURIComponent(token), { method: "POST" });
+        location.reload();
+      });
+    }
+  </script>
+</body>
+</html>`);
+});
+
+// ===== Ruta POST /bandeja/leidos =====
+// Marca todos los mensajes como leídos reescribiendo el archivo
+app.post("/bandeja/leidos", exigirToken, async (req, res) => {
+  try {
+    const mensajes = await leerBandeja();
+    // leerBandeja devuelve del más nuevo al más viejo: se invierte para
+    // guardar el archivo en su orden original
+    const lineas = mensajes
+      .slice()
+      .reverse()
+      .map((m) => JSON.stringify({ ...m, leido: true }))
+      .join("\n");
+
+    await fs.promises.writeFile(
+      rutaArchivoBandeja,
+      lineas ? `${lineas}\n` : "",
+      "utf8"
+    );
+
+    res.json({ mensaje: "Mensajes marcados como leidos" });
+  } catch (err) {
+    console.error("Error al marcar los mensajes como leidos:", err);
+    res.status(500).json({ error: "No se pudo actualizar la bandeja" });
+  }
+});
+
+// ===== Protección de los archivos con datos =====
+// express.static sirve TODA la carpeta del proyecto, así que sin este filtro
+// cualquiera podría descargar el archivo de mensajes escribiendo su nombre en
+// la barra de direcciones, y la bandeja privada no serviría de nada. Este
+// middleware va antes de express.static para cortar esas peticiones.
+const ARCHIVOS_PRIVADOS = [
+  "mensajes-chatbot.jsonl", // Contenido de los mensajes del chatbot
+  "mensajes-whatsapp.txt", // Respaldo de versiones anteriores
+  ".env", // Credenciales y número de WhatsApp
+  ".env.local",
+  "server.js", // Código del servidor: no es un archivo del sitio
+  "package.json", // Dependencias y metadatos del proyecto
+  "package-lock.json",
+  "render.yaml", // Configuración de despliegue
+];
+
+app.use((req, res, next) => {
+  // Se compara solo el nombre del archivo, sin la ruta, para que no sirva
+  // pedirlo con rodeos como /./mensajes-chatbot.jsonl
+  const archivo = path.basename(decodeURIComponent(req.path)).toLowerCase();
+
+  if (ARCHIVOS_PRIVADOS.some((privado) => privado.toLowerCase() === archivo)) {
+    console.warn(`Intento de descarga de archivo privado desde ${req.ip}: ${req.path}`);
+    return res.status(404).send("No encontrado");
+  }
+
+  next();
+});
+
+// ===== node_modules fuera del alcance público =====
+// express.static(__dirname) sirve TODA la carpeta del proyecto, incluidas las
+// dependencias instaladas. Sin este filtro, cualquiera podría descargar
+// /node_modules/express/... y recorrer el árbol completo. Las únicas librerías
+// que sí se publican son las del navegador, y se sirven aparte bajo /vendor.
+app.use((req, res, next) => {
+  const ruta = req.path.toLowerCase();
+
+  if (ruta === "/node_modules" || ruta.startsWith("/node_modules/")) {
+    return res.status(404).send("No encontrado");
+  }
+
+  next();
+});
+
+// ===== Librerías del navegador (vendor) =====
+// GSAP y Three.js se sirven desde node_modules en vez de un CDN: la página no
+// depende de un tercero, funciona sin conexión y la versión queda fijada por
+// package-lock.json. Solo se expone la carpeta compilada de cada librería,
+// nunca el paquete completo (ni su código fuente ni sus pruebas).
+app.use(
+  "/vendor/gsap",
+  express.static(path.join(__dirname, "node_modules", "gsap", "dist"), {
+    index: false,
+    immutable: true,
+    maxAge: "30d",
+  })
+);
+
+app.use(
+  "/vendor/three",
+  express.static(path.join(__dirname, "node_modules", "three", "build"), {
+    index: false,
+    immutable: true,
+    maxAge: "30d",
+  })
+);
 
 // ===== Archivos estáticos =====
 // Sirve todos los archivos de la carpeta del proyecto (index.html, css, js, imágenes)
@@ -379,6 +672,31 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
+// ===== Manejo de errores =====
+// Express responde por defecto con el stack trace completo, que incluye rutas
+// absolutas del disco del servidor. En producción eso es información filtrada,
+// así que aquí se responde siempre con un JSON breve. Va después de todas las
+// rutas, que es donde Express busca los manejadores de error.
+app.use((err, req, res, next) => {
+  // JSON mal formado o demasiado grande: es culpa de quien envía, no del servidor
+  if (err?.type === "entity.parse.failed") {
+    return res.status(400).json({ error: "JSON invalido" });
+  }
+
+  if (err?.type === "entity.too.large") {
+    return res.status(413).json({ error: "Peticion demasiado grande" });
+  }
+
+  console.error("Error no controlado:", err);
+
+  // Si ya se empezó a responder, solo Express puede cerrar la petición
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  res.status(500).json({ error: "Error interno del servidor" });
+});
+
 // ===== Inicio del servidor =====
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en el puerto ${PORT}`);
@@ -388,13 +706,13 @@ app.listen(PORT, () => {
   // Nunca se imprime el número ni las claves, solo qué variables faltan.
   const configuracion = revisarConfiguracion();
   if (configuracion.listo) {
-    console.log(`Chatbot de WhatsApp listo (proveedor: ${configuracion.proveedor})`);
+    console.log(`Chatbot listo: avisos por ${configuracion.proveedor}, contenido en /bandeja`);
   } else {
     console.warn(
-      "Chatbot de WhatsApp SIN ENTREGA: faltan las variables de entorno " +
+      "Chatbot SIN AVISOS: faltan las variables de entorno " +
         `${configuracion.faltantes.join(", ")}. ` +
-        "Los mensajes se guardan en mensajes-whatsapp.txt"
+        "Los mensajes se siguen guardando en la bandeja privada"
     );
   }
+  console.log(`Bandeja privada del chatbot: ${rutaArchivoBandeja}`);
 });
-

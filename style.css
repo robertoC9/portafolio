@@ -20,8 +20,54 @@ html, body {
   height: 100%;
   background: url("fondo.jpg") center center / cover no-repeat;
   z-index: 0;
+  /* GSAP mueve y agranda esta capa al hacer scroll: se le avisa al navegador
+     para que lo resuelva en la tarjeta gráfica */
+  will-change: transform;
 }
-body > *:not(.image-container) {
+
+/* ===== Fondo 3D (partículas de Three.js) ===== */
+/* Comparte el nivel de apilamiento de la imagen y va después en el documento,
+   así que queda por encima de la foto y por debajo del contenido. No recibe
+   clics: es solo decoración. El lienzo lo inserta js/three/background.js. */
+.fondo-3d {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.fondo-3d-lienzo {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* ===== Barra de progreso de lectura ===== */
+/* La crea js/animations/progreso-scroll.js. Va por encima del navbar para que
+   la línea se vea entera en el borde superior de la ventana. */
+.scroll-progreso {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  z-index: 2000;
+  pointer-events: none;
+}
+.scroll-progreso-relleno {
+  display: block;
+  height: 100%;
+  /* Dorado del tema aclarándose hacia la derecha */
+  background: linear-gradient(90deg, #857a4f, #9c9163 55%, #e8ddb8);
+  /* Sin transición: el avance lo gobierna GSAP con el scroll */
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+/* El contenido de la página va por encima de las dos capas de fondo. El
+   selector excluye .fondo-3d a propósito: sin esa exclusión esta regla le
+   daría z-index 1 y el lienzo taparía el contenido. */
+body > *:not(.image-container):not(.fondo-3d) {
   position: relative;
   z-index: 1;
 }
@@ -51,6 +97,11 @@ body > *:not(.image-container) {
 }
 
 /* ===== Navbar ===== */
+.navbar {
+  /* Acompaña el cambio de estado al hacer scroll */
+  transition: padding 0.35s ease, background-color 0.35s ease,
+    box-shadow 0.35s ease;
+}
 .navbar-brand {
   font-weight: bold;
   color: #9c9163 !important;
@@ -60,6 +111,27 @@ body > *:not(.image-container) {
   height: 40px;
   width: auto;
   border-radius: 6px;
+}
+
+/* Estado compacto: al bajar por la página el navbar encoge y gana fondo, para
+   no robar altura al contenido. La clase la pone
+   js/animations/navbar-scroll.js. */
+.navbar-compacta {
+  padding-top: 0;
+  padding-bottom: 0;
+  background-color: rgba(0, 0, 0, 0.94) !important;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+}
+.navbar-compacta .logo-img {
+  height: 32px;
+  transition: height 0.35s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navbar,
+  .navbar-compacta .logo-img {
+    transition: none;
+  }
 }
 
 /* ===== Secciones ===== */
@@ -178,7 +250,8 @@ h2 {
   overflow: hidden;
   border-radius: 14px;
   background: rgba(255,255,255,0.1);
-  transition: height 0.35s ease;
+  /* Sin transición de alto: el crecimiento lo anima GSAP Flip desde
+     js/animations/certificates.js, y una transición de CSS se pelearía con él. */
 }
 .certificate-image {
   display: block;
@@ -189,16 +262,20 @@ h2 {
 
 /* ===== Certificaciones: tarjeta ampliada al hacer clic ===== */
 /* La columna pasa a ocupar la fila completa para que el certificado se lea */
+/* Se cambia width y NO flex-basis a propósito: flex-basis tiene prioridad
+   sobre width, así que GSAP Flip no podría animar el ancho y el crecimiento
+   daría un salto en lugar de animarse. */
 #certifications .certificate-col.is-expanded {
-  flex: 0 0 100%;
+  width: 100%;
   max-width: 100%;
 }
 /* La vista previa adopta la proporción real del certificado (1620x1013),
-   así se ve la página entera sin recortes ni deformación */
+   así se ve la página entera sin recortes ni deformación.
+   El margen no cambia respecto al estado compacto: Flip no anima márgenes, y
+   un margen distinto daría un salto a mitad del movimiento. */
 #certifications .certificate-card.is-expanded .certificate-preview {
   height: auto;
   aspect-ratio: 1620 / 1013;
-  margin: 16px 16px 0;
   background: #fff;
 }
 /* La tarjeta abierta no se levanta con el hover para no "saltar" al leerla */
@@ -226,12 +303,9 @@ h2 {
     height: 120px;
   }
 }
-/* Respeta la preferencia del sistema de reducir animaciones */
-@media (prefers-reduced-motion: reduce) {
-  .certificate-preview {
-    transition: none;
-  }
-}
+/* Con "menos movimiento" activado la tarjeta se abre de golpe, sin animación:
+   de eso se encarga js/animations/certificates.js, que se salta Flip y aplica
+   las clases directamente. Por eso aquí no hace falta ninguna regla. */
 
 /* ===== Resumen (currículum web) ===== */
 #resume h2 { font-size: 2.5rem; font-style: italic; }

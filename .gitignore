@@ -3,5 +3,7 @@
 .env
 .env.local
 
-# Mensajes recibidos por el chatbot cuando no hay proveedor configurado
+# Bandeja privada del chatbot: contiene los mensajes que envian las visitas.
+# Nunca debe subirse al repositorio.
+mensajes-chatbot.jsonl
 mensajes-whatsapp.txt
