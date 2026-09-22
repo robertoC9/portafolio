@@ -75,6 +75,11 @@ body > *:not(.image-container):not(.fondo-3d) {
 /* ===== Hero ===== */
 .hero {
   min-height: 100vh;
+  /* En móvil la barra del navegador infla el 100vh y el hero queda más alto
+     que la pantalla: la variante svh usa la altura visible real. Los
+     navegadores que no la conocen ignoran esta línea y se quedan con la de
+     arriba, así que funciona como fallback automático. */
+  min-height: 100svh;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -87,6 +92,13 @@ body > *:not(.image-container):not(.fondo-3d) {
   font-weight: 700;
   letter-spacing: 2px;
   text-transform: uppercase;
+}
+/* display-3 son 56px fijos: "BIENVENIDO" en mayúsculas con 2px de espaciado
+   mide ~400px y desborda una pantalla de 360px (overflow-x la recortaría).
+   En pantallas chicas el título escala con el ancho; sobre 576px manda el
+   tamaño normal de Bootstrap. */
+@media (max-width: 576px) {
+  .modern-title { font-size: clamp(2rem, 11vw, 3.5rem); }
 }
 
 /* Soporte del troceado por letras que hace js/animations/hero.js con
@@ -176,6 +188,11 @@ h2 {
   50%  { text-shadow: -6px 0px 26px rgba(0,0,0,1), 6px 0px 26px rgba(0,0,0,0.9); }
   75%  { text-shadow: 0px -6px 22px rgba(0,0,0,1), 0px 6px 22px rgba(0,0,0,0.9); }
   100% { text-shadow: 6px 0px 18px rgba(0,0,0,1), -6px 0px 18px rgba(0,0,0,0.9); }
+}
+/* Con "menos movimiento" el resplandor queda estático: la animación infinita
+   repinta el text-shadow sin parar (batería) y no aporta información. */
+@media (prefers-reduced-motion: reduce) {
+  h2 { animation: none; }
 }
 
 /* ===== Sobre mí ===== */
@@ -741,6 +758,18 @@ footer .social-icons a:hover {
   animation: fadeInOut 3s ease forwards;
   z-index: 9999;
 }
+/* En pantallas chicas el aviso ocupa el ancho disponible y sube un poco,
+   para no tapar el botón de enviar del chat ni salirse del borde */
+@media (max-width: 576px) {
+  .dialogo-enviado {
+    left: 12px;
+    right: 12px;
+    bottom: 16px;
+    padding: 12px 16px;
+    text-align: center;
+  }
+}
+
 @keyframes fadeInOut {
   0% { opacity: 0; transform: translateY(20px); }
   10% { opacity: 1; transform: translateY(0); }

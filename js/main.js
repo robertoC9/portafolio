@@ -23,8 +23,35 @@ import { animarFondoDePagina } from "./animations/fondo-parallax.js";
 import { crearBarraDeProgreso } from "./animations/progreso-scroll.js";
 import { prepararRevelados } from "./animations/reveal.js";
 import { gsap } from "./lib/gsap.js";
-import { iniciarFondo3D } from "./three/background.js";
-import { iniciarDisolucionDeRetrato } from "./three/portrait-dissolve.js";
+
+// ===== Three.js: fuera del camino crítico =====
+// background.js y portrait-dissolve.js arrastran los 2,1 MB de Three.js.
+// Se cargan con import() DINÁMICO cuando la página ya terminó de cargar, así
+// el dispositivo pinta antes el contenido y los adornos llegan después. Una
+// sola promesa compartida: el navegador descarga y evalúa Three.js una vez.
+let promesaThree = null;
+function obtenerThree() {
+  if (!promesaThree) {
+    promesaThree = Promise.all([
+      import("./three/background.js"),
+      import("./three/portrait-dissolve.js"),
+    ]).then(([fondo, retrato]) => ({
+      iniciarFondo3D: fondo.iniciarFondo3D,
+      iniciarDisolucionDeRetrato: retrato.iniciarDisolucionDeRetrato,
+    }));
+  }
+  return promesaThree;
+}
+
+// Ejecuta algo solo cuando el navegador terminó de cargar (window.load):
+// ninguna petición de Three.js compite con el primer pintado.
+function alTerminarDeCargar(funcion) {
+  if (document.readyState === "complete") {
+    funcion();
+  } else {
+    window.addEventListener("load", funcion, { once: true });
+  }
+}
 
 // ===== Funcionalidad: se prepara siempre =====
 prepararCertificaciones();
@@ -33,8 +60,13 @@ prepararNavbarCompacta();
 // ===== Fondo 3D =====
 // Decide por su cuenta si puede funcionar: si no hay WebGL no hace nada, y si
 // se pide menos movimiento dibuja un solo fotograma fijo. Por eso se arranca
-// fuera de la consulta de movimiento, sin condiciones aquí.
-iniciarFondo3D();
+// fuera de la consulta de movimiento, sin condiciones aquí — solo esperando a
+// que la página termine de cargar para no pelear con el primer pintado.
+alTerminarDeCargar(() => {
+  obtenerThree()
+    .then((modulos) => modulos.iniciarFondo3D())
+    .catch((error) => console.error("No se pudo cargar Three.js:", error));
+});
 
 // ===== Adorno: solo sin "menos movimiento" =====
 // gsap.matchMedia() no es solo un if: cuando la preferencia cambia, deshace
@@ -57,8 +89,18 @@ consultaDeMovimiento.add("(prefers-reduced-motion: no-preference)", () => {
   // consulta de movimiento como el resto. Arranca SOLO la primera vez que la
   // foto entra en pantalla; después, el cursor es el único disparador.
   // Recibe gsap para que sus tweens entren en el mismo sistema que los
-  // demás (y se reviertan solos si la preferencia cambia).
-  const disolucion = iniciarDisolucionDeRetrato(gsap);
+  // demás (y se reviertan solos si la preferencia cambia). Su módulo (y con
+  // él Three.js) se pide en diferido: si la preferencia cambia antes de que
+  // llegue, `sinDisolucion` evita arrancarla; si ya arrancó, la limpieza la
+  // destruye igual que antes.
+  let disolucion = null;
+  let sinDisolucion = false;
+  obtenerThree()
+    .then((modulos) => {
+      if (sinDisolucion) return;
+      disolucion = modulos.iniciarDisolucionDeRetrato(gsap);
+    })
+    .catch((error) => console.error("No se pudo cargar Three.js:", error));
 
   // Estos crean elementos y animaciones propias: devuelven cómo deshacerse
   // de ellos para que la limpieza de matchMedia los retire también.
@@ -66,6 +108,8 @@ consultaDeMovimiento.add("(prefers-reduced-motion: no-preference)", () => {
   const fondo = animarFondoDePagina();
 
   return () => {
+    // Si el módulo de Three.js aún no llegó, al llegar no debe arrancar
+    sinDisolucion = true;
     continuas?.logo?.destruir();
     continuas?.marca?.destruir();
     continuas?.retrato?.kill();
