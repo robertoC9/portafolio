@@ -228,7 +228,13 @@ h2 {
 
 /* ===== Proyectos (oscuro transparente) ===== */
 #projects h2 { font-size: 2.5rem; font-style: italic; }
+
+/* height:100% para que todas las tarjetas de una fila midan lo mismo: sin
+   esto cada una crece con su texto y los botones quedan a distinta altura.
+   (Bootstrap ya trae .card en flex-column y .card-body con flex:1, así que
+   el cuerpo estira y nosotros empujamos las acciones al fondo más abajo.) */
 #projects .card {
+  height: 100%;
   background-color: rgba(0, 0, 0, 0.7);
   color: #fff;
   border: 1px solid rgba(255,255,255,0.2);
@@ -236,12 +242,54 @@ h2 {
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-#projects .card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 6px 16px rgba(0,0,0,0.6);
+/* El levantamiento solo con puntero real: en el celular, :hover se queda
+   "pegado" después del toque y la tarjeta no volvía a bajar. */
+@media (hover: hover) and (pointer: fine) {
+  #projects .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.6);
+  }
 }
 #projects .card-title,
 #projects .card-text {
+  color: #fff;
+}
+/* Con "menos movimiento" la tarjeta no se levanta: la sombra sí puede
+   cambiar, porque no es movimiento. Va DESPUÉS de la regla de hover para
+   que, en empate de especificidad, gane el reset. */
+@media (prefers-reduced-motion: reduce) {
+  #projects .card, #projects .card:hover { transform: none; }
+}
+
+/* El body en flex-col es lo que permite empujar las acciones al fondo con
+   margin-top:auto (si el body fuera block, auto no surtiría efecto). */
+#projects .card-body {
+  display: flex;
+  flex-direction: column;
+}
+/* Acciones al fondo de la tarjeta, con un aire mínimo garantizado aunque
+   la descripción llegue hasta abajo (padding) y sobre todo cuando la
+   tarjeta es más alta que su contenido (margin auto). */
+.project-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 15px;
+}
+.project-actions .btn {
+  min-width: 140px; /* ancho parejo: todos los botones miden igual */
+  text-align: center;
+}
+/* "Ver proyecto" es la acción principal: en dorado del tema. El gris de
+   outline-secondary casi no se distinguía sobre la tarjeta oscura. */
+.project-actions .btn-outline-secondary {
+  color: #e8ddb8;
+  border-color: #9c9163;
+}
+.project-actions .btn-outline-secondary:hover {
+  background-color: #9c9163;
+  border-color: #9c9163;
   color: #fff;
 }
 .project-actions .btn-outline-dark {
@@ -252,30 +300,35 @@ h2 {
   background-color: #fff;
   color: #000;
 }
-#projects textarea {
-  background-color: rgba(255,255,255,0.1);
-  color: #fff;
-  border: 1px solid rgba(255,255,255,0.3);
-  border-radius: 6px;
-  padding: 10px;
+
+/* El enlace que envuelve la imagen es de bloque para que su contorno de
+   foco (navegación con teclado) rodee la foto entera. */
+#projects .card > a { display: block; }
+#projects .card > a:focus-visible {
+  outline: 3px solid #9c9163;
+  outline-offset: 3px;
+  border-radius: 14px;
 }
-#projects textarea::placeholder { color: #ccc; }
-#projects button {
-  background-color: #9c9163;
-  border: none;
-  color: #fff;
-  font-weight: bold;
-  transition: background-color 0.3s, transform 0.3s;
-}
-#projects button:hover {
-  background-color: #857a4f;
-  transform: scale(1.05);
-}
+
+/* La imagen va incrustada con 12px de aire. OJO con el cálculo: Bootstrap
+   le pone width:100% a .card-img-top y, con 12px de margen a cada lado,
+   medía 100% + 24px y se SALÍA del borde de la tarjeta (se veía sobre todo
+   en el celular, donde la columna ocupa todo el ancho). El calc descuenta
+   esos 24px y display:block elimina el hueco de línea que dejaba el img. */
 #projects .card-img-top {
+  display: block;
+  width: calc(100% - 24px);
   height: 220px;
   object-fit: cover;
   border-radius: 14px;
   margin: 12px 12px 0;
+  transition: transform 0.3s ease;
+}
+/* Acercada de la foto al pasar el cursor: solo en dispositivos con puntero
+   real y SIN preferencia de menos movimiento. Crece hacia adentro del aire
+   de 12px, así que nunca cruza el borde de la tarjeta. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  #projects .card:hover .card-img-top { transform: scale(1.04); }
 }
 
 /* ===== Certificaciones (oscuro transparente) ===== */
