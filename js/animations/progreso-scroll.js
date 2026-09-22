@@ -36,9 +36,12 @@ export function crearBarraDeProgreso() {
       scaleX: 1,
       ease: "none",
       scrollTrigger: {
-        trigger: document.documentElement,
-        start: "top top",
-        end: "bottom bottom",
+        // Sin trigger: mide posiciones absolutas de scroll. Medir
+        // document.documentElement con "top top"/"bottom bottom" no vale aquí:
+        // html tiene height:100% y su caja mide lo que la ventana, así que
+        // "bottom bottom" resolvía a ~0 y la barra no avanzaba nunca.
+        start: 0,
+        end: () => ScrollTrigger.maxScroll(window),
         scrub: SUAVIZADO,
         invalidateOnRefresh: true,
       },

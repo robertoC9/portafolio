@@ -19,7 +19,6 @@ import {
   prepararNavbarCompacta,
 } from "./animations/navbar-scroll.js";
 import { prepararCertificaciones } from "./animations/certificates.js";
-import { animarFondoDePagina } from "./animations/fondo-parallax.js";
 import { crearBarraDeProgreso } from "./animations/progreso-scroll.js";
 import { prepararRevelados } from "./animations/reveal.js";
 import { gsap } from "./lib/gsap.js";
@@ -102,10 +101,11 @@ consultaDeMovimiento.add("(prefers-reduced-motion: no-preference)", () => {
     })
     .catch((error) => console.error("No se pudo cargar Three.js:", error));
 
-  // Estos crean elementos y animaciones propias: devuelven cómo deshacerse
-  // de ellos para que la limpieza de matchMedia los retire también.
+  // Crea elementos y animaciones propias: devuelve cómo deshacerse de ellos
+  // para que la limpieza de matchMedia los retire también. (El parallax del
+  // fondo ya no es de JS: vive en style.css como animación pura de CSS con
+  // animation-timeline, así que no hay nada que destruir aquí.)
   const barra = crearBarraDeProgreso();
-  const fondo = animarFondoDePagina();
 
   return () => {
     // Si el módulo de Three.js aún no llegó, al llegar no debe arrancar
@@ -115,6 +115,5 @@ consultaDeMovimiento.add("(prefers-reduced-motion: no-preference)", () => {
     continuas?.retrato?.kill();
     disolucion?.destruir();
     barra?.destruir();
-    fondo?.destruir();
   };
 });

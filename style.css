@@ -7,9 +7,18 @@ html, body {
   margin: 0;
   padding: 0;
   height: 100%;
-  overflow-x: hidden;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   position: relative;
+}
+/* overflow-x SOLO en html, nunca en body: en body, overflow-x:hidden obliga a
+   overflow-y:auto, y con height:100% el body se convertía en un contenedor de
+   scroll interno del alto de la ventana. La página entera scrolleaba dentro
+   del body, la ventana no se movía, ScrollTrigger (que escucha la ventana) se
+   quedaba en 0 y todos los gsap.from de títulos y tarjetas nunca se disparaban:
+   secciones vacías. Con overflow-x:hidden solo en html el recorte horizontal
+   sigue existiendo (se propaga a la ventana) y el scroll lo maneja la ventana. */
+html {
+  overflow-x: hidden;
 }
 
 /* ===== Fondo ===== */
@@ -20,9 +29,34 @@ html, body {
   height: 100%;
   background: url("fondo.jpg") center center / cover no-repeat;
   z-index: 0;
-  /* GSAP mueve y agranda esta capa al hacer scroll: se le avisa al navegador
-     para que lo resuelva en la tarjeta gráfica */
+  /* La capa se transforma con la animación pura de CSS de más abajo:
+     se le avisa al navegador para que lo resuelva en la tarjeta gráfica */
   will-change: transform;
+}
+
+/* ===== Parallax del fondo con CSS puro (sin GSAP) ===== */
+/* Mismo recorrido que hacía js/animations/fondo-parallax.js: la capa va con
+   escala fija y se desplaza de -6% a +6% de su alto según el scroll de la
+   página, de modo que las secciones parecen flotar por delante. La escala
+   x1,18 deja un margen de 9% por lado, mayor que el 6% de desplazamiento:
+   los bordes de la ventana nunca se asoman. El navegador lo calcula en el
+   compositor, sin JavaScript ni trabajo en el hilo principal. */
+@keyframes parallaxFondo {
+  from { transform: translateY(-6%) scale(1.18); }
+  to   { transform: translateY(6%) scale(1.18); }
+}
+/* Si el navegador no entiende animation-timeline (Safari < 26, Firefox
+   anteriores al 159) o el usuario pide menos movimiento, la animación no se
+   aplica y la capa queda quieta cubriendo la ventana: exactamente el fondo
+   fijo que ya veían esos casos. El animation-timeline va DESPUÉS del
+   shorthand animation, porque el shorthand lo reiniciaría. */
+@supports (animation-timeline: scroll()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .image-container {
+      animation: parallaxFondo linear;
+      animation-timeline: scroll(root block);
+    }
+  }
 }
 
 /* ===== Fondo 3D (partículas de Three.js) ===== */
