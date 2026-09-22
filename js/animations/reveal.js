@@ -35,8 +35,16 @@ const GRUPOS = [
   { disparador: "#skills", objetivo: "#skills .skill-item", retardo: 0.045 },
   { disparador: "#contact", objetivo: "#contact .wa-chat" },
   { disparador: "#contact", objetivo: "#contact .social-icons a", retardo: 0.08 },
-  { disparador: "footer", objetivo: "footer p" },
-  { disparador: "footer", objetivo: "footer .social-icons a", retardo: 0.08 },
+  // El footer es lo último de la página: su top nunca baja del 85% de la
+  // ventana, así que con el inicio general no se disparaba y el texto y los
+  // iconos se quedaban invisibles. "top bottom" se alcanza siempre.
+  { disparador: "footer", objetivo: "footer p", inicio: "top bottom" },
+  {
+    disparador: "footer",
+    objetivo: "footer .social-icons a",
+    retardo: 0.08,
+    inicio: "top bottom",
+  },
 ];
 
 // Párrafos de introducción que hay bajo algunos títulos de sección
@@ -50,8 +58,16 @@ const SELECTOR_INTRODUCCIONES = [
 
 // Revelar un conjunto
 // objetivo  selector CSS de los elementos que aparecen
-// opciones  disparador (selector del que marca el momento) y retardo entre
-//           elementos
+// opciones  disparador (selector del que marca el momento), retardo entre
+//           elementos e inicio (dónde se marca ese momento en la ventana).
+//           El inicio por defecto, "top 85%", sirve para las secciones: su
+//           borde superior sí llega a bajar del 85% de la ventana. Un
+//           elemento que cierra la página (el footer) no: al llegar al final
+//           del scroll su borde superior queda a ~145 px del borde inferior
+//           y en pantallas altas ese 85% no se alcanza nunca. Si el trigger
+//           no se dispara, el gsap.from deja el elemento en opacidad 0 para
+//           siempre, así que ese elemento usa inicio: "top bottom" y basta
+//           con que asome por el borde inferior de la ventana.
 function revelarAlEntrar(objetivo, opciones = {}) {
   const elementos = gsap.utils.toArray(objetivo);
 
@@ -70,7 +86,7 @@ function revelarAlEntrar(objetivo, opciones = {}) {
     stagger: opciones.retardo ?? RETARDO_ENTRE_ELEMENTOS,
     scrollTrigger: {
       trigger: disparador,
-      start: "top 85%",
+      start: opciones.inicio ?? "top 85%",
       once: true, // Aparece una vez y se queda
     },
     // OBLIGATORIO: un gsap.from deja `transform: translate(0px, 0px)` en
@@ -112,6 +128,7 @@ export function prepararRevelados() {
     revelarAlEntrar(grupo.objetivo, {
       disparador: grupo.disparador,
       retardo: grupo.retardo,
+      inicio: grupo.inicio,
       limpiar: grupo.limpiar,
     });
   });
