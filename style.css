@@ -88,6 +88,26 @@ body > *:not(.image-container):not(.fondo-3d) {
   letter-spacing: 2px;
   text-transform: uppercase;
 }
+
+/* Soporte del troceado por letras que hace js/animations/hero.js con
+   SplitText. Tres reglas y ninguna sobra:
+   - .word inline-block: la palabra se vuelve una caja atómica, así que el
+     texto SOLO puede romperse entre palabras, nunca dentro de una.
+   - .char inline-block: las transformaciones (escala/giro de la entrada) no
+     se aplican a texto en línea.
+   - .char sin letter-spacing: cada caja hereda los 2px del padre Y el padre
+     además los pondría entre caja y caja → se duplicarían. Con 0 dentro,
+     los 2px los pone el padre entre letras, que es exactamente lo mismo que
+     pasaba antes entre letra y letra. Los espacios troceados van con
+     white-space: pre para que no se colapsen a cero y las palabras no se
+     peguen.
+   Si SplitText no carga no hay .char/.word y nada de esto aplica. */
+.modern-title .word { display: inline-block; }
+.modern-title .char {
+  display: inline-block;
+  letter-spacing: 0;
+  white-space: pre;
+}
 .hero-subtitle {
   font-weight: 600;
   text-shadow: 0 2px 8px rgba(0, 0, 0, 0.55);
@@ -111,6 +131,7 @@ body > *:not(.image-container):not(.fondo-3d) {
   height: 40px;
   width: auto;
   border-radius: 6px;
+  cursor: pointer; /* responde al clic: crece al doble y vuelve (logo.js) */
 }
 
 /* Estado compacto: al bajar por la página el navbar encoge y gana fondo, para
@@ -159,12 +180,33 @@ h2 {
 
 /* ===== Sobre mí ===== */
 #about h2 { font-size: 2.2rem; }
+
+/* Contenedor del retrato: se ajusta al tamaño de la foto y sirve de ancla
+   para el lienzo de partículas de la desintegración (js/three/
+   portrait-dissolve.js), que queda centrado sobre la foto sin despegarse del
+   maquetado. inline-block + text-center lo centra igual que antes la foto. */
+.retrato-escena {
+  position: relative;
+  display: inline-block;
+  margin-top: 20px;
+  line-height: 0; /* quita el espacio fantasma que deja el <img> en línea */
+}
 .retrato {
+  display: block; /* sin espacio fantasma debajo de la imagen */
   width: 120px;
   border-radius: 50%;
-  margin-top: 20px;
   border: 3px solid #817b63;
   box-shadow: 0 6px 15px rgba(0,0,0,0.4);
+}
+/* Lienzo de la desintegración: centrado sobre la foto y sin robarle los
+   clics ni el hover a la página. Lo inserta portrait-dissolve.js. */
+.retrato-particulas {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 1;
 }
 
 /* ===== Proyectos (oscuro transparente) ===== */
@@ -402,10 +444,14 @@ h2 {
   border: 1px solid rgba(255,255,255,0.2);
   border-radius: 14px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-  transition: transform 0.3s ease, border-color 0.3s ease;
+  transition: transform 0.3s ease, border-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
+/* Mismo rebote que las tarjetas de proyectos y certificaciones: sube 5 px y
+   la sombra se hunde un poco más. Conserva su borde dorado de siempre. */
 .skill-item:hover {
-  transform: translateX(5px);
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.6);
   border-color: rgba(156,145,99,0.7);
 }
 .skill-logo {
@@ -460,6 +506,12 @@ h2 {
   border-radius: 20px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
   overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+/* Mismo rebote que las tarjetas de proyectos y certificaciones */
+#contact .wa-chat:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
 }
 
 /* Cabecera con el avatar y el nombre del asistente */

@@ -4,10 +4,14 @@
 // Contiene:
 //  - Reloj en vivo en el footer
 //  - Animación de sombras ondulantes en los títulos
-//  - Rotación del logo
-//  - Rebote del retrato
 //  - Envío y carga de comentarios (frontend)
+//  - Chatbot de la sección de contacto (entrega los mensajes vía /send)
 //  - Diálogo flotante de notificaciones
+//
+// Ojo: las animaciones del logo, el retrato y las tarjetas de
+// certificaciones NO viven aquí, sino en js/animations/ (GSAP).
+// Estaban duplicadas con setInterval y peleaban por el mismo
+// transform, así que se eliminaron de este archivo.
 // ============================================================
 
 // ===== Hora en el footer =====
@@ -43,108 +47,13 @@ function aplicarSombrasOndulantes() {
 // Se ejecuta al cargar la página
 aplicarSombrasOndulantes();
 
-// ===== Tarjetas de certificaciones expandibles =====
-// Las tarjetas comienzan compactas. Al pulsarlas ocupan la fila completa y
-// muestran el certificado entero; solo una puede estar abierta a la vez.
-const tarjetasCertificado = document.querySelectorAll(".certificate-card");
-
-// Textos del aviso que indica qué pasa al pulsar la tarjeta
-const TEXTO_AMPLIAR = "Pulsa para ampliar el certificado";
-const TEXTO_CERRAR = "Pulsa para cerrar";
-
-// Abre o cierra una tarjeta concreta y sincroniza clases, accesibilidad y aviso
-function fijarEstadoCertificado(tarjeta, expandida) {
-  const columna = tarjeta.closest(".certificate-col"); // Columna que la contiene
-  const aviso = tarjeta.querySelector(".certificate-hint"); // Texto de ayuda
-
-  tarjeta.classList.toggle("is-expanded", expandida);
-  tarjeta.setAttribute("aria-expanded", String(expandida));
-
-  // La columna se ensancha a toda la fila para que el certificado se lea
-  if (columna) {
-    columna.classList.toggle("is-expanded", expandida);
-  }
-
-  if (aviso) {
-    aviso.textContent = expandida ? TEXTO_CERRAR : TEXTO_AMPLIAR;
-  }
-}
-
-// Cierra todas las tarjetas menos la indicada (null cierra todas)
-function cerrarOtrosCertificados(tarjetaActiva) {
-  tarjetasCertificado.forEach((tarjeta) => {
-    if (tarjeta !== tarjetaActiva && tarjeta.classList.contains("is-expanded")) {
-      fijarEstadoCertificado(tarjeta, false);
-    }
-  });
-}
-
-tarjetasCertificado.forEach((tarjeta) => {
-  // Aviso de interacción: se agrega desde JS porque sin JS no habría ampliación
-  const aviso = document.createElement("span");
-  aviso.className = "certificate-hint";
-  aviso.textContent = TEXTO_AMPLIAR;
-  tarjeta.querySelector(".card-body")?.appendChild(aviso);
-
-  const alternarCertificado = () => {
-    const seVaAExpandir = !tarjeta.classList.contains("is-expanded");
-
-    cerrarOtrosCertificados(tarjeta); // Solo una tarjeta abierta a la vez
-    fijarEstadoCertificado(tarjeta, seVaAExpandir);
-
-    // Al abrirla se lleva a la vista, ya que la tarjeta crece bastante
-    if (seVaAExpandir) {
-      tarjeta.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
-  };
-
-  tarjeta.addEventListener("click", alternarCertificado);
-  tarjeta.addEventListener("keydown", (evento) => {
-    if (evento.key === "Enter" || evento.key === " ") {
-      evento.preventDefault();
-      alternarCertificado();
-    }
-  });
-});
-
-// La tecla Escape cierra el certificado que esté abierto
-document.addEventListener("keydown", (evento) => {
-  if (evento.key === "Escape") {
-    cerrarOtrosCertificados(null);
-  }
-});
-
-// ===== Logo girando hacia la izquierda con rebote =====
-let anguloLogo = 0; // Ángulo actual de rotación del logo
-
-function girarLogo() {
-  anguloLogo -= 0.3; // Rota hacia la izquierda (ángulo negativo)
-  const logo = document.getElementById("logo"); // Elemento del logo
-
-  if (logo) {
-    // Aplica rotación + un pequeño escalado (rebote) usando seno
-    logo.style.transform = `rotate(${anguloLogo}deg) scale(${1 + Math.sin(anguloLogo / 15) * 0.05})`;
-  }
-}
-
-// Se ejecuta cada 30 ms para una animación fluida
-setInterval(girarLogo, 30);
-
-// ===== Retrato con pequeno rebote =====
-let anguloRetrato = 0; // Variable de control para el "paso" de la animación
-
-function rebotarRetrato() {
-  anguloRetrato += 0.2; // Incrementa el paso
-  const retrato = document.getElementById("retrato"); // Elemento del retrato
-
-  if (retrato) {
-    // Aplica un escalado oscilante (rebote suave)
-    retrato.style.transform = `scale(${1 + Math.sin(anguloRetrato / 20) * 0.05})`;
-  }
-}
-
-// Se ejecuta cada 30 ms para una animación fluida
-setInterval(rebotarRetrato, 30);
+// ===== Logo, retrato y tarjetas de certificaciones =====
+// El giro del logo, el rebote del retrato y la ampliación de los certificados
+// los anima GSAP desde js/main.js (js/animations/logo.js y
+// js/animations/certificates.js). Antes había aquí versiones con setInterval
+// que escribían style.transform cada 30 ms y se pisaban con las de GSAP, y
+// manejadores de clic duplicados que hacían que la tarjeta se abriera y se
+// cerrara en el mismo clic. Una sola implementación, en js/.
 
 // ===== Enviar comentario al backend =====
 // Envía el comentario de un textarea al endpoint /guardar-comentario
@@ -215,12 +124,13 @@ function cargarComentarios(idLista) {
     });
 }
 
-// ===== Chatbot de WhatsApp de la seccion de contacto =====
+// ===== Chatbot de la seccion de contacto =====
 // Conversacion guiada que pide el nombre y el mensaje, y los envia al endpoint
-// /send. El numero de WhatsApp de destino NO esta en este archivo ni llega
-// nunca al navegador: lo conoce solo el servidor. Ademas del honeypot del
-// formulario, se mide el tiempo que tarda el envio como filtro extra: los bots
-// rellenan y envian en milisegundos.
+// /send. Ni el token de Telegram ni el chat de destino estan en este archivo
+// ni llegan nunca al navegador: viven en las variables de entorno de Netlify
+// y solo la funcion serverless (netlify/functions/send.js) los lee. Ademas
+// del honeypot del formulario, se mide el tiempo que tarda el envio como
+// filtro extra: los bots rellenan y envian en milisegundos.
 (function iniciarChatbotWhatsapp() {
   const chat = document.getElementById("waChat"); // Contenedor del chatbot
   if (!chat) return; // Si la seccion no esta en la pagina, no se hace nada
@@ -273,7 +183,7 @@ function cargarComentarios(idLista) {
 
   // ----- Envio al backend -----
   // El servidor recibe nombre, mensaje, el honeypot y los milisegundos que
-  // pasaron desde que se abrio el chat, y decide si reenviarlo a WhatsApp.
+  // pasaron desde que se abrio el chat, y decide si entregarlo en Telegram.
   async function enviarAWhatsapp(mensaje) {
     const respuesta = await fetch("/send", {
       method: "POST",
@@ -313,7 +223,7 @@ function cargarComentarios(idLista) {
     nombreVisita = texto.slice(0, 60); // Mismo limite que valida el servidor
     paso = "mensaje";
     entrada.placeholder = "Cuéntame en qué te ayudo...";
-    responderBot(`Un gusto, ${nombreVisita}. Ahora escríbeme tu mensaje y se lo hago llegar a Roberto por WhatsApp.`);
+    responderBot(`Un gusto, ${nombreVisita}. Ahora escríbeme tu mensaje y se lo hago llegar a Roberto.`);
   }
 
   // ----- Paso 2: enviar el mensaje -----
@@ -325,11 +235,10 @@ function cargarComentarios(idLista) {
       const datos = await enviarAWhatsapp(texto);
       quitarEscribiendo();
 
-      // El servidor indica si el mensaje llego a WhatsApp o si solo quedo
-      // registrado. Se avisa lo que de verdad ocurrio, sin prometer un envio
-      // que no se hizo.
+      // El servidor indica si el mensaje llego a su destino o si algo fallo.
+      // Se avisa lo que de verdad ocurrio, sin prometer un envio que no se hizo.
       if (datos.entregado) {
-        agregarMensaje("¡Listo! Le envié tu mensaje por WhatsApp. Te responderá en cuanto lo vea.", "bot");
+        agregarMensaje("¡Listo! Le entregué tu mensaje a Roberto. Te responderá en cuanto lo vea.", "bot");
       } else {
         agregarMensaje("Tu mensaje quedó registrado y Roberto lo revisará pronto. Si es urgente, escríbele al correo.", "bot");
       }
@@ -338,7 +247,7 @@ function cargarComentarios(idLista) {
       entrada.placeholder = "Escribe otro mensaje...";
     } catch (error) {
       quitarEscribiendo();
-      console.error("Error al enviar el mensaje de WhatsApp:", error);
+      console.error("Error al enviar el mensaje:", error);
       agregarMensaje("No pude enviar el mensaje ahora mismo. Intenta de nuevo en un momento o escríbeme al correo.", "bot");
     } finally {
       fijarBloqueo(false);
@@ -365,7 +274,7 @@ function cargarComentarios(idLista) {
 
   // ----- Saludo inicial -----
   if (estadoTexto) {
-    estadoTexto.textContent = "Tu mensaje llega directo a su WhatsApp";
+    estadoTexto.textContent = "Tu mensaje llega directo a Roberto";
   }
   responderBot("¡Hola! Soy el asistente de Roberto. ¿Cómo te llamas?", 400);
 })();

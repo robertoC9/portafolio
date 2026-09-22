@@ -24,6 +24,7 @@ import { crearBarraDeProgreso } from "./animations/progreso-scroll.js";
 import { prepararRevelados } from "./animations/reveal.js";
 import { gsap } from "./lib/gsap.js";
 import { iniciarFondo3D } from "./three/background.js";
+import { iniciarDisolucionDeRetrato } from "./three/portrait-dissolve.js";
 
 // ===== Funcionalidad: se prepara siempre =====
 prepararCertificaciones();
@@ -46,14 +47,29 @@ consultaDeMovimiento.add("(prefers-reduced-motion: no-preference)", () => {
   animarEntradaHeroe();
   animarEntradaNavbar();
   prepararRevelados();
-  iniciarAnimacionesContinuas();
 
-  // Estos dos crean elementos y animaciones propias: devuelven cómo deshacerse
+  // Animaciones continuas del logo, la marca y el retrato. Logo y marca
+  // crecen al doble al hacer clic (vuelven solos, sin salirse del marco);
+  // el handle retira todo, clics incluidos.
+  const continuas = iniciarAnimacionesContinuas();
+
+  // Desintegración del retrato: es adorno puro, así que vive dentro de la
+  // consulta de movimiento como el resto. Arranca SOLO la primera vez que la
+  // foto entra en pantalla; después, el cursor es el único disparador.
+  // Recibe gsap para que sus tweens entren en el mismo sistema que los
+  // demás (y se reviertan solos si la preferencia cambia).
+  const disolucion = iniciarDisolucionDeRetrato(gsap);
+
+  // Estos crean elementos y animaciones propias: devuelven cómo deshacerse
   // de ellos para que la limpieza de matchMedia los retire también.
   const barra = crearBarraDeProgreso();
   const fondo = animarFondoDePagina();
 
   return () => {
+    continuas?.logo?.destruir();
+    continuas?.marca?.destruir();
+    continuas?.retrato?.kill();
+    disolucion?.destruir();
     barra?.destruir();
     fondo?.destruir();
   };

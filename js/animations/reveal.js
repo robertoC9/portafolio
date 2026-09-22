@@ -28,8 +28,8 @@ const GRUPOS = [
   {
     disparador: "#certifications",
     objetivo: "#certifications .certificate-card",
-    retardo: 0.08,
-    limpiar: true, // Estas tarjetas luego las mueve Flip: no conviene dejar restos
+    retardo: 0.08, // Estas tarjetas luego las mueve Flip: por eso el clearProps
+                   // universal de revelarAlEntrar es doblemente importante aquí
   },
   { disparador: "#resume", objetivo: "#resume .resume-tab" },
   { disparador: "#skills", objetivo: "#skills .skill-item", retardo: 0.045 },
@@ -48,10 +48,10 @@ const SELECTOR_INTRODUCCIONES = [
   ".skills-intro",
 ].join(", ");
 
-// ===== Revelar un conjunto =====
+// Revelar un conjunto
 // objetivo  selector CSS de los elementos que aparecen
-// opciones  disparador (selector del que marca el momento), retardo entre
-//           elementos y limpiar (borrar los estilos en línea al terminar)
+// opciones  disparador (selector del que marca el momento) y retardo entre
+//           elementos
 function revelarAlEntrar(objetivo, opciones = {}) {
   const elementos = gsap.utils.toArray(objetivo);
 
@@ -63,7 +63,7 @@ function revelarAlEntrar(objetivo, opciones = {}) {
 
   if (!disparador) return null;
 
-  const configuracion = {
+  return gsap.from(elementos, {
     y: DESPLAZAMIENTO_PX,
     opacity: 0,
     duration: DURACION,
@@ -73,15 +73,13 @@ function revelarAlEntrar(objetivo, opciones = {}) {
       start: "top 85%",
       once: true, // Aparece una vez y se queda
     },
-  };
-
-  if (opciones.limpiar) {
-    // Al terminar se quitan los estilos en línea, para que el elemento quede
-    // exactamente como lo describe el CSS
-    configuracion.clearProps = "all";
-  }
-
-  return gsap.from(elementos, configuracion);
+    // OBLIGATORIO: un gsap.from deja `transform: translate(0px, 0px)` en
+    // línea al terminar, y un estilo en línea pisa CUALQUIER :hover de CSS
+    // (transform: translateY(-5px) de las tarjetas no haría nada). Al
+    // borrar los estilos en línea, el elemento queda exactamente como lo
+    // describe el CSS y su rebote al pasar el cursor vuelve a funcionar.
+    clearProps: "all",
+  });
 }
 
 // ===== Títulos de sección =====
@@ -97,6 +95,8 @@ function revelarTitulosDeSeccion() {
         start: "top 88%",
         once: true,
       },
+      // Mismo motivo que en revelarAlEntrar: no dejar transform en línea
+      clearProps: "all",
     });
   });
 }

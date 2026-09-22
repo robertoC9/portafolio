@@ -640,13 +640,17 @@ app.use((req, res, next) => {
 });
 
 // ===== Librerías del navegador (vendor) =====
-// GSAP y Three.js se sirven desde node_modules en vez de un CDN: la página no
-// depende de un tercero, funciona sin conexión y la versión queda fijada por
-// package-lock.json. Solo se expone la carpeta compilada de cada librería,
-// nunca el paquete completo (ni su código fuente ni sus pruebas).
+// GSAP y Three.js se sirven desde la carpeta vendor/ del repositorio en vez de
+// un CDN: la página no depende de un tercero y funciona sin conexión. Esa
+// carpeta está versionada a propósito porque el sitio se publica como sitio
+// ESTÁTICO (Netlify) y allí no corre este servidor: si los archivos vivieran
+// solo en node_modules, /vendor/... daría 404 en producción y GSAP y
+// Three.js no cargarían. La versión queda fijada por package-lock.json.
+// Solo se expone la carpeta compilada de cada librería, nunca el paquete
+// completo (ni su código fuente ni sus pruebas).
 app.use(
   "/vendor/gsap",
-  express.static(path.join(__dirname, "node_modules", "gsap", "dist"), {
+  express.static(path.join(__dirname, "vendor", "gsap"), {
     index: false,
     immutable: true,
     maxAge: "30d",
@@ -655,7 +659,7 @@ app.use(
 
 app.use(
   "/vendor/three",
-  express.static(path.join(__dirname, "node_modules", "three", "build"), {
+  express.static(path.join(__dirname, "vendor", "three"), {
     index: false,
     immutable: true,
     maxAge: "30d",

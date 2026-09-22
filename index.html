@@ -37,9 +37,11 @@
   <!-- ===== Barra de navegación (Navbar) ===== -->
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
     <div class="container-fluid">
-      <!-- Marca / nombre que aparece a la izquierda -->
+      <!-- Marca / nombre a la izquierda (crece al doble al hacer clic y
+           vuelve sola, como el logo; ver js/animations/logo.js) -->
       <a class="navbar-brand" href="#">A . Carbone</a>
-      <!-- Logo animado que se muestra a la derecha (id="logo" usado por script.js) -->
+      <!-- Logo animado a la derecha (id="logo" usado por js/animations/logo.js:
+           gira y late en bucle; al hacer clic crece al doble y vuelve solo -->
       <div class="logo-right">
         <img src="logo.png" alt="Logo" class="logo-img" id="logo">
       </div>
@@ -60,11 +62,17 @@
       <h2 class="mb-4">Sobre mí</h2>
       <p>Soy Roberto Angel Carbone , desarrollador fullstack con experiencia en proyectos digitales frontend y backend.
         Diseñador ux/ui generalista.</p>
-      <!-- Retrato personal con animación de rebote (id="retrato" usado por script.js) -->
-      <!-- Ojo con las mayúsculas: el archivo en disco es retrato.JPG. En Linux
-           (donde corre Render) el sistema de archivos distingue mayúsculas, así
-           que "retrato.jpg" daría 404 y la foto no se vería. -->
-      <img src="retrato.JPG" alt="Retrato personal" class="retrato" id="retrato">
+      <!-- Retrato personal con animación de rebote (id="retrato" usado por
+           js/animations/logo.js). Envuelto en .retrato-escena porque
+           js/three/portrait-dissolve.js monta ahí el lienzo de partículas
+           de la desintegración: el contenedor se ajusta al tamaño de la foto
+           y el lienzo queda centrado sobre él sin mover el maquetado.
+           Ojo con las mayúsculas: el archivo en disco es retrato.JPG. En Linux
+           (donde corre el hosting) el sistema de archivos distingue mayúsculas,
+           así que "retrato.jpg" daría 404 y la foto no se vería. -->
+      <div class="retrato-escena">
+        <img src="retrato.JPG" alt="Retrato personal" class="retrato" id="retrato">
+      </div>
     </div>
   </section>
 
@@ -376,19 +384,21 @@
         <a href="https://x.com/RobertoACarbone" target="_blank" rel="noreferrer"><i class="bi bi-twitter-x"></i> X</a>
       </div>
 
-      <!-- ===== Chatbot de WhatsApp (con honeypot antibots) =====
-           El número de destino NO aparece en esta página ni en el JS: vive solo
-           en el servidor, en la variable de entorno WHATSAPP_TO. El navegador
-           únicamente envía el mensaje por POST al endpoint genérico /send, que
-           es quien lo reenvía a WhatsApp. Así nadie puede leer el número desde
-           el código fuente del sitio. -->
+      <!-- ===== Chatbot (con honeypot antibots) =====
+           El navegador solo hace POST a /send con el texto. Esa ruta la
+           atiende una función serverless de Netlify
+           (netlify/functions/send.js), que entrega el mensaje en el chat de
+           Telegram del dueño del sitio usando el token y el chat de destino
+           que viven en las variables de entorno de Netlify. Ni el token ni el
+           chat aparecen en esta página ni en el JS, así que nadie puede
+           leerlos desde el código fuente del sitio. -->
       <div class="wa-chat" id="waChat">
         <!-- Cabecera del chat: identidad del asistente, sin datos de contacto -->
         <div class="wa-chat-header">
           <span class="wa-chat-avatar" aria-hidden="true"><i class="bi bi-whatsapp"></i></span>
           <span class="wa-chat-id">
             <span class="wa-chat-name">Asistente de Roberto</span>
-            <span class="wa-chat-status" id="waStatus">Tu mensaje llega directo a su WhatsApp</span>
+            <span class="wa-chat-status" id="waStatus">Tu mensaje llega directo a Roberto</span>
           </span>
         </div>
 
@@ -439,11 +449,14 @@
   <script src="script.js"></script>
 
   <!-- ===== Librerías de animación =====
-       Se sirven desde el propio servidor (/vendor/...) en lugar de un CDN: la
-       página no depende de terceros y la versión queda fijada por
-       package-lock.json. Van como scripts clásicos porque dejan sus clases en
-       window, y js/lib/gsap.js es el único archivo que las lee.
-       El orden importa: el núcleo de GSAP primero, los plugins después. -->
+       Se sirven desde la carpeta vendor/ del propio sitio (/vendor/...) en
+       lugar de un CDN: la página no depende de terceros. La carpeta vendor/
+       está versionada porque Netlify publica el sitio como estático y no
+       ejecuta server.js: sin esos archivos en el repositorio, /vendor/...
+       daría 404 y GSAP y Three.js no cargarían. Van como scripts clásicos
+       porque dejan sus clases en window, y js/lib/gsap.js es el único archivo
+       que las lee. El orden importa: el núcleo de GSAP primero, los plugins
+       después. -->
   <script src="/vendor/gsap/gsap.min.js"></script>
   <script src="/vendor/gsap/ScrollTrigger.min.js"></script>
   <script src="/vendor/gsap/SplitText.min.js"></script>

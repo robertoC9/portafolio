@@ -1,0 +1,15 @@
+# ============================================================
+# Configuración de despliegue en Netlify
+# ============================================================
+# El chatbot hace POST a /send. Como el sitio es estático, esa ruta no
+# corresponde a ningún archivo: se reescribe (status 200 = reescritura, el
+# navegador sigue viendo /send y mantiene método y cuerpo) a la función
+# serverless que entrega el mensaje en Telegram.
+#
+# Solo se define redirects: la configuración de build (carpeta base y de
+# publicación) sigue siendo la que está guardada en el panel de Netlify.
+
+[[redirects]]
+  from = "/send"
+  to = "/.netlify/functions/send"
+  status = 200
