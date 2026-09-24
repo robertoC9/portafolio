@@ -6,10 +6,87 @@
 # navegador sigue viendo /send y mantiene método y cuerpo) a la función
 # serverless que entrega el mensaje en Telegram.
 #
-# Solo se define redirects: la configuración de build (carpeta base y de
+# Solo se definen redirects: la configuración de build (carpeta base y de
 # publicación) sigue siendo la que está guardada en el panel de Netlify.
+# Las cabeceras de seguridad están en el archivo _headers.
 
 [[redirects]]
   from = "/send"
   to = "/.netlify/functions/send"
   status = 200
+  force = true
+
+# Estos archivos son datos locales o código del backend: no forman parte del
+# sitio publicado y se devuelven como 404 aunque Netlify los encuentre en la
+# carpeta de publicación.
+[[redirects]]
+  from = "/comentarios.txt"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/comentarios/*"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/netlify/*"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/server.js"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/package.json"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/package-lock.json"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/render.yaml"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/netlify.toml"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/README.md"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/TODO.md"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/mensajes-chatbot.jsonl"
+  to = "/404"
+  status = 404
+  force = true
+
+[[redirects]]
+  from = "/mensajes-whatsapp.txt"
+  to = "/404"
+  status = 404
+  force = true

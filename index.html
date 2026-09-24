@@ -18,9 +18,9 @@
   <link rel="icon" type="image/png" href="logo.png">
 
   <!-- Bootstrap CSS (framework de estilos) -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha256-MBffSnbbXwHCuZtgPYiwMQbfE7z+GOZ7fBPCNB06Z98=" crossorigin="anonymous">
   <!-- Bootstrap Icons (iconos: correo, linkedin, X, etc.) -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" integrity="sha256-T/pr6kME0u2kGGg/ViYWhe1HvwCZUDnyflrWLVOTjS0=" crossorigin="anonymous">
   <!-- CSS externo propio del portafolio -->
   <link rel="stylesheet" href="style.css">
 </head>
@@ -158,9 +158,8 @@
           </div>
         </div>
 
-        <!-- Proyecto 5: Ncripts.org: va solo en una fila nueva, centrado
-             bajo las tarjetas de Publicidad y Blog (mx-auto sobre el .row) -->
-        <div class="col-md-6 mt-4 mx-auto">
+        <!-- Proyecto 5: Ncripts.org, primera tarjeta de la última fila -->
+        <div class="col-md-6 mt-4">
           <div class="card shadow">
             <a href="https://ncripts.org" target="_blank" rel="noreferrer">
               <img src="ncripts.jpg" loading="lazy" decoding="async" class="card-img-top" alt="Ncripts.org">
@@ -170,6 +169,25 @@
               <p class="card-text">Proyecto web enfocado en contenido, comunidad y recursos digitales.</p>
               <div class="project-actions">
                 <a href="https://ncripts.org" target="_blank" rel="noreferrer" class="btn btn-outline-secondary">Ver proyecto</a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Proyecto 6: Hilo Vivo, al lado de Ncripts.org -->
+        <div class="col-md-6 mt-4">
+          <div class="card shadow">
+            <a href="https://hilovivotienda.netlify.app" target="_blank" rel="noreferrer">
+              <img src="hilovivotienda.jpg" loading="lazy" decoding="async" class="card-img-top" alt="Hilo Vivo">
+            </a>
+            <div class="card-body">
+              <h5 class="card-title">Hilo Vivo</h5>
+              <p class="card-text">Tienda de artesanía chilena con piezas hechas a mano por artesanos de Alhué.</p>
+              <div class="project-actions">
+                <a href="https://hilovivotienda.netlify.app" target="_blank" rel="noreferrer" class="btn btn-outline-secondary">Ver proyecto</a>
+                <a href="https://github.com/robertoC9/hilo-vivo" target="_blank" rel="noreferrer" class="btn btn-outline-dark">
+                  <i class="bi bi-github"></i> GitHub
+                </a>
               </div>
             </div>
           </div>
@@ -310,7 +328,7 @@
   <!-- ===== Manejo de programas (tecnologías) ===== -->
   <section id="skills" class="py-5">
     <div class="container">
-      <h2 class="text-center mb-2">Lenguajes y Skills</h2>
+      <h2 class="text-center mb-2">Lenguajes + Skills + IA</h2>
       <p class="skills-intro text-center mb-4">Tecnologías y herramientas con las que trabajo a diario.</p>
       <div class="row justify-content-center">
         <div class="col-md-10 col-lg-8">
@@ -329,6 +347,14 @@
               <span class="skill-name">JavaScript</span>
             </li>
             <li class="skill-item">
+              <img src="logos/javascript.svg" loading="lazy" decoding="async" class="skill-logo" alt="Logo de JavaScript">
+              <span class="skill-name">Vanilla JS</span>
+            </li>
+            <li class="skill-item">
+              <img src="logos/react.svg" loading="lazy" decoding="async" class="skill-logo" alt="Logo de React">
+              <span class="skill-name">React</span>
+            </li>
+            <li class="skill-item">
               <img src="logos/gsap.svg" loading="lazy" decoding="async" class="skill-logo" alt="Logo de GSAP">
               <span class="skill-name">GSAP</span>
             </li>
@@ -339,6 +365,10 @@
             <li class="skill-item">
               <img src="logos/nodejs.svg" loading="lazy" decoding="async" class="skill-logo" alt="Logo de Node.js">
               <span class="skill-name">Node.js</span>
+            </li>
+            <li class="skill-item">
+              <img src="logos/docker.svg" loading="lazy" decoding="async" class="skill-logo" alt="Logo de Docker">
+              <span class="skill-name">Docker</span>
             </li>
             <li class="skill-item">
               <!-- El logo de Express es negro: se invierte para verse sobre el fondo oscuro -->
@@ -362,6 +392,14 @@
               <span class="skill-name">Supabase</span>
             </li>
             <li class="skill-item">
+              <img src="logos/netlify.svg" loading="lazy" decoding="async" class="skill-logo" alt="Logo de Netlify">
+              <span class="skill-name">Netlify</span>
+            </li>
+            <li class="skill-item">
+              <img src="logos/github.svg" loading="lazy" decoding="async" class="skill-logo" alt="Logo de GitHub">
+              <span class="skill-name">GitHub</span>
+            </li>
+            <li class="skill-item">
               <img src="logos/figma.svg" loading="lazy" decoding="async" class="skill-logo" alt="Logo de Figma">
               <span class="skill-name">Figma</span>
             </li>
@@ -372,6 +410,10 @@
             <li class="skill-item">
               <img src="logos/claude.svg" loading="lazy" decoding="async" class="skill-logo" alt="Logo de Claude">
               <span class="skill-name">Claude Design</span>
+            </li>
+            <li class="skill-item">
+              <img src="logos/opencode.svg" loading="lazy" decoding="async" class="skill-logo" alt="Logo de OpenCode">
+              <span class="skill-name">OpenCode</span>
             </li>
           </ul>
         </div>
@@ -384,7 +426,7 @@
     <div class="container">
       <h2 class="contact-title mb-4">Contacto</h2>
       <p>Escríbeme para colaborar en proyectos innovadores.</p>
-      <!-- Enlaces de contacto: correo, LinkedIn y X -->
+      <!-- Enlaces de contacto: correo, LinkedIn, X y Telegram -->
       <div class="social-icons">
         <!-- Enlace de correo electrónico -->
         <a href="mailto:robertoangelcarbone@gmail.com"><i class="bi bi-envelope-fill"></i> Correo</a>
@@ -392,6 +434,8 @@
         <a href="https://www.linkedin.com/in/roberto-angel-carbone-355498251" target="_blank" rel="noreferrer"><i class="bi bi-linkedin"></i> Roberto Carbone</a>
         <!-- Enlace a X (Twitter) -->
         <a href="https://x.com/RobertoACarbone" target="_blank" rel="noreferrer"><i class="bi bi-twitter-x"></i> X</a>
+        <!-- Enlace al bot de Telegram; solo se muestra el icono -->
+        <a href="https://t.me/RobertoHelperBot" target="_blank" rel="noreferrer" aria-label="Contactar por Telegram" title="Telegram"><i class="bi bi-telegram"></i></a>
       </div>
 
       <!-- ===== Chatbot (con honeypot antibots) =====
@@ -452,7 +496,7 @@
   </footer>
 
   <!-- Bootstrap JS (componentes interactivos del framework) -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha256-gvZPYrsDwbwYJLD5yeBfcNujPhRoGOY831wwbIzz3t0=" crossorigin="anonymous"></script>
 
   <!-- Script principal del portafolio: reloj y chatbot. Las animaciones ya no
        viven aquí, sino en js/. -->
@@ -474,13 +518,7 @@
 
   <!-- Three.js solo publica builds de módulos ES, así que se carga con un
        import map. El mapa tiene que estar declarado antes del primer módulo. -->
-  <script type="importmap">
-    {
-      "imports": {
-        "three": "/vendor/three/three.module.js"
-      }
-    }
-  </script>
+  <script type="importmap">{"imports":{"three":"/vendor/three/three.module.js"}}</script>
 
   <!-- Punto de entrada: animaciones GSAP y fondo 3D -->
   <script type="module" src="js/main.js"></script>

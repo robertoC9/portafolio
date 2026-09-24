@@ -1,9 +1,10 @@
 # Variables de entorno: contienen el numero de WhatsApp y las claves de los
 # proveedores de envio. Nunca deben subirse al repositorio publico.
 .env
-.env.local
+.env.*
+!.env.example
 
-# Bandeja privada del chatbot: contiene los mensajes que envian las visitas.
-# Nunca debe subirse al repositorio.
+# Datos escritos por la aplicación: nunca deben subirse al repositorio.
+comentarios.txt
 mensajes-chatbot.jsonl
 mensajes-whatsapp.txt

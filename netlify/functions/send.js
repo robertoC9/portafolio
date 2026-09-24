@@ -16,6 +16,7 @@
 // Environment variables, nunca en el código):
 //   TELEGRAM_BOT_TOKEN  Token que entrega @BotFather al crear el bot
 //   TELEGRAM_CHAT_ID    Identificador del chat donde llegan los mensajes
+//   CORS_ORIGINS        Opcional: dominios externos separados por comas
 //
 // Mismas validaciones y mismo contrato de respuesta que server.js, para que
 // el frontend (script.js) no distinga dónde corre el backend:
@@ -42,6 +43,7 @@ const MS_MINIMO_HUMANO = 1500;
 const LIMITE_ENVIOS = 5;
 const VENTANA_LIMITE_MS = 10 * 60 * 1000;
 const enviosPorIp = new Map(); // IP -> array de marcas de tiempo
+let ultimaLimpiezaRateLimit = 0;
 
 const ERROR_NO_CONFIGURADO =
   "Servidor del chatbot sin configurar: faltan variables de entorno de Telegram";
@@ -50,7 +52,13 @@ const ERROR_NO_CONFIGURADO =
 function json(statusCode, cuerpo) {
   return {
     statusCode,
-    headers: { "Content-Type": "application/json; charset=utf-8" },
+    headers: {
+      "Content-Type": "application/json; charset=utf-8",
+      "Cache-Control": "no-store",
+      "X-Content-Type-Options": "nosniff",
+      "X-Frame-Options": "DENY",
+      "Referrer-Policy": "no-referrer",
+    },
     body: JSON.stringify(cuerpo),
   };
 }
@@ -74,6 +82,7 @@ function ipDe(event) {
 // Devuelve true si la IP ya superó el límite de envíos de la ventana actual
 function superaLimiteDeEnvios(ip) {
   const ahora = Date.now();
+  limpiarRateLimit(ahora);
   const recientes = (enviosPorIp.get(ip) || []).filter(
     (marca) => ahora - marca < VENTANA_LIMITE_MS
   );
@@ -86,6 +95,17 @@ function superaLimiteDeEnvios(ip) {
   recientes.push(ahora);
   enviosPorIp.set(ip, recientes);
   return false;
+}
+
+function limpiarRateLimit(ahora) {
+  if (ahora - ultimaLimpiezaRateLimit < VENTANA_LIMITE_MS) return;
+  ultimaLimpiezaRateLimit = ahora;
+
+  for (const [ip, marcas] of enviosPorIp) {
+    if (marcas.every((marca) => ahora - marca >= VENTANA_LIMITE_MS)) {
+      enviosPorIp.delete(ip);
+    }
+  }
 }
 
 // ===== Configuración de Telegram =====
@@ -135,8 +155,36 @@ async function enviarATelegram(token, chatId, texto) {
   }
 }
 
+// ===== Validación de origen =====
+// La función se usa desde la misma página; solo se aceptan orígenes adicionales
+// declarados explícitamente en CORS_ORIGINS.
+function origenPermitido(event) {
+  const cabeceras = event.headers || {};
+  const origin = cabeceras.origin || cabeceras.Origin;
+  if (!origin) return true;
+
+  const permitidos = new Set(
+    String(process.env.CORS_ORIGINS || "")
+      .split(",")
+      .map((valor) => valor.trim())
+      .filter(Boolean)
+  );
+  if (permitidos.has(origin)) return true;
+
+  const host = cabeceras.host || cabeceras.Host;
+  try {
+    return new URL(origin).host === host;
+  } catch {
+    return false;
+  }
+}
+
 // ===== Punto de entrada de Netlify Functions =====
 exports.handler = async (event) => {
+  if (!origenPermitido(event)) {
+    return json(403, { error: "Origen no permitido" });
+  }
+
   if (event.httpMethod !== "POST") {
     return json(405, { error: "Metodo no permitido" });
   }

@@ -9,7 +9,7 @@
 
 // Importación de dependencias
 const express = require("express"); // Framework web para Node.js
-const cors = require("cors"); // Middleware que permite peticiones de otros orígenes (CORS)
+const cors = require("cors"); // Middleware que controla CORS
 const fs = require("fs"); // Módulo nativo para trabajar con archivos
 const path = require("path"); // Módulo nativo para manejar rutas
 const crypto = require("crypto"); // Comparación segura de tokens e identificadores
@@ -23,9 +23,95 @@ const PORT = process.env.PORT || 3000;
 // Ruta del archivo donde se guardan los comentarios (en la misma carpeta del servidor)
 const rutaArchivoComentarios = path.join(__dirname, "comentarios.txt");
 
+// Orígenes adicionales que pueden usar la API. Los orígenes del mismo dominio se
+// permiten automáticamente; esta lista solo hace falta para clientes externos.
+const ORIGENES_PERMITIDOS = new Set(
+  String(process.env.CORS_ORIGINS || "")
+    .split(",")
+    .map((origen) => origen.trim())
+    .filter(Boolean)
+);
+
+// El import map de index.html es el único script inline de la portada. Se
+// autoriza con un hash, no con unsafe-inline, para no debilitar la CSP.
+const HASH_IMPORTMAP = "'sha256-ww+TdwEdJLBiuFnYBT0Pn+YQ2th1b32RFhR3+8OpiJE='";
+
 // Middlewares globales
 app.disable("x-powered-by"); // No revela que el servidor usa Express
-app.use(cors()); // Habilita CORS para permitir peticiones desde otros dominios
+app.set("trust proxy", 1); // Render está detrás de un proxy HTTPS
+
+// Cabeceras defensivas para el HTML, la API y la bandeja privada.
+app.use((req, res, next) => {
+  const nonce = crypto.randomBytes(16).toString("base64");
+  res.locals.cspNonce = nonce;
+
+  const csp = [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "frame-src 'none'",
+    "form-action 'self'",
+    "script-src 'self' " + HASH_IMPORTMAP + " 'nonce-" + nonce + "' https://cdn.jsdelivr.net",
+    "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net",
+    "font-src 'self' https://cdn.jsdelivr.net data:",
+    "img-src 'self' data: blob:",
+    "connect-src 'self'",
+    "worker-src 'self' blob:",
+  ].join("; ");
+
+  res.setHeader("Content-Security-Policy", csp);
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  res.setHeader("Cross-Origin-Opener-Policy", "same-origin");
+
+  // Solo se marca HSTS cuando la petición realmente llegó por HTTPS. Así el
+  // desarrollo local en HTTP no queda afectado.
+  if (req.secure) {
+    res.setHeader("Strict-Transport-Security", "max-age=31536000");
+  }
+
+  next();
+});
+
+// CORS queda cerrado por defecto. Para una API consumida desde otro dominio se
+// deben separar esos dominios en CORS_ORIGINS; nunca se permite "*" por defecto.
+app.use(
+  cors({
+    origin(origin, callback) {
+      if (!origin || ORIGENES_PERMITIDOS.has(origin)) {
+        return callback(null, true);
+      }
+      return callback(null, false);
+    },
+  })
+);
+
+// Valida el origen de las operaciones que modifican datos. Sin esta comprobación,
+// un sitio externo podría intentar enviar solicitudes desde el navegador de
+// una persona aunque CORS no le devuelva la respuesta.
+function origenPermitido(req) {
+  const origin = req.get("origin");
+  if (!origin) return true; // herramientas de línea de comandos y clientes sin Origin
+  if (ORIGENES_PERMITIDOS.has(origin)) return true;
+
+  try {
+    return new URL(origin).host === req.get("host");
+  } catch {
+    return false;
+  }
+}
+
+app.use((req, res, next) => {
+  const metodosQueModifican = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+  if (metodosQueModifican.has(req.method) && !origenPermitido(req)) {
+    return res.status(403).json({ error: "Origen no permitido" });
+  }
+  next();
+});
+
 app.use(express.json({ limit: "20kb" })); // Permite recibir JSON con un límite de 20 KB
 
 // ===== Asegurar archivo de comentarios =====
@@ -53,6 +139,11 @@ app.post("/guardar-comentario", (req, res) => {
   // Validación: el comentario no puede superar los 1000 caracteres
   if (comentario.length > 1000) {
     return res.status(400).json({ error: "Comentario demasiado largo" });
+  }
+
+  // Límite básico anti-spam. El honeypot del chatbot no cubre este endpoint.
+  if (superaLimiteDeComentarios(req.ip)) {
+    return res.status(429).json({ error: "Demasiados comentarios seguidos" });
   }
 
   // Agrega el comentario (con salto de línea) al final del archivo
@@ -110,6 +201,7 @@ app.get("/comentarios", (req, res) => {
 //   WHATSAPP_TO        Número de destino en formato internacional, con el
 //                      prefijo del país
 //   WHATSAPP_PROVIDER  "callmebot" | "twilio" | vacío (solo guarda, sin aviso)
+//   CORS_ORIGINS       Opcional: dominios externos separados por comas
 //   CALLMEBOT_APIKEY   Clave de CallMeBot (si el proveedor es callmebot)
 //   TWILIO_ACCOUNT_SID / TWILIO_AUTH_TOKEN / TWILIO_FROM  (si es twilio)
 //   BANDEJA_TOKEN      Clave secreta para abrir /bandeja (invéntala larga)
@@ -143,14 +235,19 @@ const LIMITE_ENVIOS = 5;
 const VENTANA_LIMITE_MS = 10 * 60 * 1000;
 const enviosPorIp = new Map(); // IP -> array de marcas de tiempo
 
-// Render y otros hosting sirven detrás de un proxy: sin esto req.ip devolvería
-// siempre la IP interna del proxy y el límite por IP no serviría de nada
-app.set("trust proxy", 1);
+// Límite independiente para comentarios: evita que un bot llene el archivo
+// o sature el disco sin afectar el chatbot.
+const LIMITE_COMENTARIOS = 5;
+const comentariosPorIp = new Map();
+let ultimaLimpiezaRateLimit = 0;
+
+// El proxy confiable se configuró arriba para que req.ip use la IP real.
 
 // ===== Control de frecuencia por IP =====
 // Devuelve true si la IP ya superó el límite de envíos de la ventana actual
 function superaLimiteDeEnvios(ip) {
   const ahora = Date.now();
+  limpiarMapasRateLimit(ahora);
   // Se conservan solo los envíos que siguen dentro de la ventana de tiempo
   const recientes = (enviosPorIp.get(ip) || []).filter(
     (marca) => ahora - marca < VENTANA_LIMITE_MS
@@ -163,6 +260,36 @@ function superaLimiteDeEnvios(ip) {
 
   recientes.push(ahora);
   enviosPorIp.set(ip, recientes);
+  return false;
+}
+
+function limpiarMapasRateLimit(ahora) {
+  if (ahora - ultimaLimpiezaRateLimit < VENTANA_LIMITE_MS) return;
+  ultimaLimpiezaRateLimit = ahora;
+
+  for (const mapa of [enviosPorIp, comentariosPorIp]) {
+    for (const [ip, marcas] of mapa) {
+      if (marcas.every((marca) => ahora - marca >= VENTANA_LIMITE_MS)) {
+        mapa.delete(ip);
+      }
+    }
+  }
+}
+
+function superaLimiteDeComentarios(ip) {
+  const ahora = Date.now();
+  limpiarMapasRateLimit(ahora);
+  const recientes = (comentariosPorIp.get(ip) || []).filter(
+    (marca) => ahora - marca < VENTANA_LIMITE_MS
+  );
+
+  if (recientes.length >= LIMITE_COMENTARIOS) {
+    comentariosPorIp.set(ip, recientes);
+    return true;
+  }
+
+  recientes.push(ahora);
+  comentariosPorIp.set(ip, recientes);
   return false;
 }
 
@@ -448,19 +575,59 @@ function tokenValido(tokenRecibido) {
 }
 
 // ===== Middleware de acceso a la bandeja =====
+function tokenDeCookie(req) {
+  const partes = String(req.get("cookie") || "").split(";");
+  for (const parte of partes) {
+    const separador = parte.indexOf("=");
+    if (separador < 0) continue;
+    if (parte.slice(0, separador).trim() !== "bandeja_token") continue;
+    try {
+      return decodeURIComponent(parte.slice(separador + 1).trim());
+    } catch {
+      return "";
+    }
+  }
+  return "";
+}
+
+function tokenDeSolicitud(req) {
+  const authorization = String(req.get("Authorization") || "");
+  const bearer = authorization.match(/^Bearer\s+(.+)$/i);
+  return (
+    req.get("X-Bandeja-Token") ||
+    (bearer ? bearer[1].trim() : "") ||
+    tokenDeCookie(req) ||
+    req.query.token ||
+    ""
+  );
+}
+
 function exigirToken(req, res, next) {
   // Cabeceras para que la bandeja no se guarde en cachés ni la indexen
   res.set("Cache-Control", "no-store, max-age=0");
   res.set("X-Robots-Tag", "noindex, nofollow");
+  res.set("Referrer-Policy", "no-referrer");
 
-  // El token se acepta por cabecera o por parámetro de la URL. La cabecera es
-  // más discreta; el parámetro permite guardar la bandeja como favorito.
-  const token = req.get("X-Bandeja-Token") || req.query.token;
+  const token = tokenDeSolicitud(req);
 
   if (!tokenValido(token)) {
     console.warn(`Acceso rechazado a la bandeja desde ${req.ip}`);
     // 404 en lugar de 401: así la bandeja no se delata como algo que existe
     return res.status(404).send("No encontrado");
+  }
+
+  // La primera visita puede llegar con el token en la URL para no romper los
+  // enlaces ya compartidos. Se cambia por una cookie HttpOnly y se redirige a
+  // una URL limpia; el JavaScript nunca necesita leer el token.
+  if (req.method === "GET" && tokenValido(req.query.token)) {
+    res.cookie("bandeja_token", token, {
+      httpOnly: true,
+      secure: req.secure,
+      sameSite: "lax",
+      maxAge: 8 * 60 * 60 * 1000,
+      path: "/",
+    });
+    return res.redirect(302, "/bandeja");
   }
 
   next();
@@ -512,6 +679,7 @@ app.get("/bandeja", exigirToken, async (req, res) => {
     .join("");
 
   const vacia = '<p class="vacia">Todavía no hay mensajes.</p>';
+  const nonce = res.locals.cspNonce;
 
   res.type("html").send(`<!DOCTYPE html>
 <html lang="es">
@@ -520,7 +688,7 @@ app.get("/bandeja", exigirToken, async (req, res) => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="robots" content="noindex, nofollow">
   <title>Bandeja privada</title>
-  <style>
+  <style nonce="${nonce}">
     body { margin: 0; padding: 24px; background: #14171a; color: #fff;
            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     .caja { max-width: 720px; margin: 0 auto; }
@@ -553,14 +721,13 @@ app.get("/bandeja", exigirToken, async (req, res) => {
       solo viaja un aviso fijo, sin nombre ni texto.
     </p>
   </div>
-  <script>
-    // El token viaja en la URL de esta página; se reutiliza para marcar leidos
+  <script nonce="${nonce}">
+    // La cookie HttpOnly permite marcar sin exponer el token a JavaScript.
     const boton = document.getElementById("marcar");
     if (boton) {
       boton.addEventListener("click", async () => {
         boton.disabled = true;
-        const token = new URLSearchParams(location.search).get("token") || "";
-        await fetch("/bandeja/leidos?token=" + encodeURIComponent(token), { method: "POST" });
+        await fetch("/bandeja/leidos", { method: "POST" });
         location.reload();
       });
     }
@@ -598,25 +765,40 @@ app.post("/bandeja/leidos", exigirToken, async (req, res) => {
 // ===== Protección de los archivos con datos =====
 // express.static sirve TODA la carpeta del proyecto, así que sin este filtro
 // cualquiera podría descargar el archivo de mensajes escribiendo su nombre en
-// la barra de direcciones, y la bandeja privada no serviría de nada. Este
-// middleware va antes de express.static para cortar esas peticiones.
+// la barra de direcciones. Este middleware va antes de express.static para
+// cortar tanto archivos privados como carpetas internas del backend.
 const ARCHIVOS_PRIVADOS = [
   "mensajes-chatbot.jsonl", // Contenido de los mensajes del chatbot
   "mensajes-whatsapp.txt", // Respaldo de versiones anteriores
-  ".env", // Credenciales y número de WhatsApp
+  "comentarios.txt", // Archivo de comentarios
+  ".env", // Credenciales y números de los proveedores
   ".env.local",
   "server.js", // Código del servidor: no es un archivo del sitio
   "package.json", // Dependencias y metadatos del proyecto
   "package-lock.json",
   "render.yaml", // Configuración de despliegue
+  "netlify.toml",
+  "README.md",
+  "TODO.md",
 ];
+const PREFIJOS_PRIVADOS = new Set(["netlify", "comentarios"]);
 
 app.use((req, res, next) => {
-  // Se compara solo el nombre del archivo, sin la ruta, para que no sirva
-  // pedirlo con rodeos como /./mensajes-chatbot.jsonl
-  const archivo = path.basename(decodeURIComponent(req.path)).toLowerCase();
+  let rutaSolicitada;
+  try {
+    rutaSolicitada = decodeURIComponent(req.path).replace(/^\/+/, "");
+  } catch {
+    return res.status(400).send("Solicitud invalida");
+  }
 
-  if (ARCHIVOS_PRIVADOS.some((privado) => privado.toLowerCase() === archivo)) {
+  const segmentos = rutaSolicitada.split("/");
+  const archivo = path.basename(rutaSolicitada).toLowerCase();
+  const carpeta = String(segmentos[0] || "").toLowerCase();
+  const esPrivado =
+    PREFIJOS_PRIVADOS.has(carpeta) ||
+    ARCHIVOS_PRIVADOS.some((privado) => privado.toLowerCase() === archivo);
+
+  if (esPrivado) {
     console.warn(`Intento de descarga de archivo privado desde ${req.ip}: ${req.path}`);
     return res.status(404).send("No encontrado");
   }
@@ -667,8 +849,9 @@ app.use(
 );
 
 // ===== Archivos estáticos =====
-// Sirve todos los archivos de la carpeta del proyecto (index.html, css, js, imágenes)
-app.use(express.static(__dirname));
+// Sirve los archivos públicos del proyecto. Los archivos ocultos quedan
+// bloqueados también por si alguien cambia la configuración de static.
+app.use(express.static(__dirname, { dotfiles: "deny", index: false }));
 
 // ===== Ruta raíz "/" =====
 // Envía el index.html como página principal
